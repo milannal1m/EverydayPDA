@@ -15,6 +15,12 @@ How to pull
 git pull --rebase origin main
 ```
 
+Mergen
+```bash
+git checkout main
+git merge <branch-name>
+```
+
 Branch erstellen
 ```bash
 git branch <branch-name>
@@ -25,8 +31,8 @@ In Branch wechseln
 git checkout -b <branch-name>
 ```
 
-Mergen
+Branch löschen (lokal und remote)
 ```bash
-git checkout main
-git merge <branch-name>
+git branch -D <branch-name>
+git push <remote-name> --delete <branch-name>
 ```
