@@ -12,7 +12,7 @@ git push origin <branch>
 
 How to pull
 ```bash
-git pull origin
+git pull --rebase origin main
 ```
 
 Branch erstellen
