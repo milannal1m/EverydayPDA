@@ -3,15 +3,15 @@ from fastapi import FastAPI
 app = FastAPI()
 
 @app.get("/answer")
-def read_root():
+def get_answer():
     return {"Hello": "World"}
 
 @app.post("/preferences/init")
-def read_root():
+def init_preferences():
     return {"Hello": "World"}
 
 @app.get("/preferences/{username}")
-def read_root():
+def get_preferences():
     return {"Hello": "World"}
 
 @app.put("/preferences/{username}")
