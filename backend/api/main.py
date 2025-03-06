@@ -10,10 +10,10 @@ def read_root():
 def read_root():
     return {"Hello": "World"}
 
-@app.get("/preferences/username")
+@app.get("/preferences/{username}")
 def read_root():
     return {"Hello": "World"}
 
-@app.update("/preferences/username")
-def read_root():
+@app.put("/preferences/{username}")
+def update_preferences():
     return {"Hello": "World"}

@@ -1,3 +1,27 @@
+
+# EverydayPDA
+
+## Table of Contents
+
+1. [API](#api)
+2. [Docker](#docker)
+3. [GIT](#git)
+
+## API
+
+The REST API is running on [Localhost](http://localhost:8000) with a complete [documentation](http://localhost:8000/docs).
+
+However, you need to start [Docker](#docker) for this.
+
+## Docker
+
+Start Docker:
+```bash
+docker compose up -d --build
+```
+
+## Git
+
 How to clone:
 ```bash
 git clone https://github.com/milannal1m/EverydayPDA.git
