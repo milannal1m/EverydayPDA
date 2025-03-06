@@ -33,6 +33,6 @@ CREATE TABLE user_stocks (
 CREATE TABLE user_news (
     id INT PRIMARY KEY AUTO_INCREMENT,
     u_id INT,
-    news_name VARCHAR(255),
-    FOREIGN KEY (u_id) REFERENCES users(u_id) ON DELETE CASCADE
+    n_id INT,
+    FOREIGN KEY (n_id) REFERENCES news(n_id) ON DELETE CASCADE
 );
