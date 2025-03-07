@@ -1,17 +1,17 @@
 services:
-  postgres:
+  preferences_db:
     image: postgres:latest
-    container_name: postgres
+    container_name: preferences_db
     restart: always
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: user_db
+      POSTGRES_DB: preferences_db
     ports:
       - "5434:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./backend/db/userdb.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./backend/db/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - backend_network
 
@@ -21,7 +21,7 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - postgres
+      - preferences_db
     networks:
       - backend_network
 
