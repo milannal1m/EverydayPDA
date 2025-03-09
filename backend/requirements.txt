@@ -2,3 +2,4 @@ uvicorn
 fastapi
 psycopg2
 asyncpg
+httpx

@@ -58,5 +58,5 @@ git checkout -b <branch-name>
 Branch löschen (lokal und remote)
 ```bash
 git branch -D <branch-name>
-git push <remote-name> --delete <branch-name>
+git push origin --delete <branch-name>
 ```
