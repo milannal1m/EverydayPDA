@@ -24,7 +24,6 @@ def init_preferences():
 async def get_preferences(username: str) -> Dict:
     conn = await get_db_connection()
     
-    # SQL-Abfrage ausführen
     query = """
     SELECT 
         u.username, 
