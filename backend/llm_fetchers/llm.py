@@ -23,7 +23,7 @@ def process_input_with_chatgpt(user_input: str) -> str:
         response = openai.ChatCompletion.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": user_input}],
-            max_tokens=200
+            max_tokens= 70
         )
         return response["choices"][0]["message"]["content"]
     except Exception as e:
