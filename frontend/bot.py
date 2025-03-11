@@ -4,11 +4,12 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 import os
 from dotenv import load_dotenv
 
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 env_path = os.path.join(BASE_DIR, ".env")
 load_dotenv(env_path)
 
 TELEGRAM_API_KEY = os.getenv("TELEGRAM_API_KEY")
+print(TELEGRAM_API_KEY)
 
 # Logging einrichten
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -26,7 +27,7 @@ async def echo(update: Update, context: CallbackContext):
 # Hauptfunktion
 def main():
     # Telegram Bot-Token
-    application = Application.builder().token("7129624717:AAG9Hwft0x0YX20YAm3Pz0F9thLRuKq3vUU").build()
+    application = Application.builder().token(TELEGRAM_API_KEY).build()
 
     # Befehle und Nachrichtenhandler hinzufügen
     application.add_handler(CommandHandler("start", start))
