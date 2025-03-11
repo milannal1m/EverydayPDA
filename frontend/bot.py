@@ -17,7 +17,7 @@ async def echo(update: Update, context: CallbackContext):
 
 # Hauptfunktion
 def main():
-    # Ersetze 'DEIN_TOKEN' mit deinem echten Bot-Token
+    # Telegram Bot-Token
     application = Application.builder().token("7129624717:AAG9Hwft0x0YX20YAm3Pz0F9thLRuKq3vUU").build()
 
     # Befehle und Nachrichtenhandler hinzufügen
