@@ -2,8 +2,17 @@ from fastapi import FastAPI, Query, HTTPException
 import asyncpg
 from typing import Dict, List, Optional
 from pydantic import BaseModel 
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Erlaubt alle Ursprünge (Achtung: Sicherheitsrisiko!)
+    allow_credentials=True,
+    allow_methods=["*"],  # Erlaubt alle Methoden (GET, POST, etc.)
+    allow_headers=["*"],  # Erlaubt alle Header
+)
 
 DATABASE_URL = "postgresql://user:password@preferences_db:5432/preferences_db"
 
