@@ -1,6 +1,14 @@
 import logging
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
+import os
+from dotenv import load_dotenv
+
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+env_path = os.path.join(BASE_DIR, ".env")
+load_dotenv(env_path)
+
+TELEGRAM_API_KEY = os.getenv("TELEGRAM_API_KEY")
 
 # Logging einrichten
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
