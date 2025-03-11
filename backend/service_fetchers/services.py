@@ -1,39 +1,41 @@
 import requests
+import os
+from dotenv import load_dotenv
 
-API_KEYS = {
-    "twelve_data": "744ee61677174f7ab67776bb4baafc05",
-    "newsapi": "bb8f2a67e4c242b7b3a1fb3e7b6b475a",
-    "weatherapi": "7bc3ed65f5e2488abf6110618251103",
-    "openrouteservice": "5b3ce3597851110001cf624863ead55248df484badb5065125478f8e",
-    "aviationstack": "b27a026e11342d17fc0e71aaedd3f7a7"
-}
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+env_path = os.path.join(BASE_DIR, ".env")
+load_dotenv(env_path)
 
-# Amadeus API-Zugangsdaten
-AMADEUS_CLIENT_ID = "aVcbGLl41sdldL9oGFXwcJMGBSOCgjLI"
-AMADEUS_CLIENT_SECRET = "4mR7LMoSL8R4VMa0"
+AMADEUS_CLIENT_ID = os.getenv("AMADEUS_CLIENT_ID")
+AMADEUS_CLIENT_SECRET = os.getenv("AMADEUS_CLIENT_SECRET")
+TWElVE_DATA_API_KEY = os.getenv("TWElVE_DATA_API_KEY ")
+NEWS_API_KEY = os.getenv("NEWS_API_KEY")
+WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
+OPENROUTE_API_KEY = os.getenv("OPENROUTE_API_KEY")
+AVIATION_STACK_API_KEY = os.getenv("AVIATION_STACK_API_KEY")
 
 # 1. Aktien (Twelve Data)
 def get_stock_price(symbol="AAPL"):
-    url = f"https://api.twelvedata.com/time_series?symbol={symbol}&interval=1min&apikey={API_KEYS['twelve_data']}"
+    url = f"https://api.twelvedata.com/time_series?symbol={symbol}&interval=1min&apikey={TWElVE_DATA_API_KEY}"
     response = requests.get(url)
     return response.json()
 
 # 2. Nachrichten (NewsAPI)
 def get_news():
-    url = f"https://newsapi.org/v2/top-headlines?country=us&pageSize=5&apiKey={API_KEYS['newsapi']}"
+    url = f"https://newsapi.org/v2/top-headlines?country=us&pageSize=5&apiKey={NEWS_API_KEY}"
     response = requests.get(url)
     return response.json()
 
 # 3. Wetter (WeatherAPI)
 def get_weather(city="Berlin"):
-    url = f"http://api.weatherapi.com/v1/current.json?key={API_KEYS['weatherapi']}&q={city}"
+    url = f"http://api.weatherapi.com/v1/current.json?key={WEATHER_API_KEY}&q={city}"
     response = requests.get(url)
     return response.json()
 
 # 4. Wegezeitberechnung (OpenRouteService)
 def get_route_time(start=[8.6821, 50.1109], end=[8.6298, 50.1095]):  # Koordinaten (Lon, Lat)
     url = "https://api.openrouteservice.org/v2/directions/driving-car"
-    headers = {"Authorization": API_KEYS["openrouteservice"], "Content-Type": "application/json"}
+    headers = {"Authorization": OPENROUTE_API_KEY, "Content-Type": "application/json"}
     params = {"start": f"{start[0]},{start[1]}", "end": f"{end[0]},{end[1]}"}
     response = requests.get(url, headers=headers, params=params)
     return response.json()
@@ -64,7 +66,7 @@ def get_hotels(city_code="STR"):
 
 # 7. Fluginformationen (AviationStack)
 def get_flight_status(flight_number="LH201"):
-    url = f"http://api.aviationstack.com/v1/flights?access_key={API_KEYS['aviationstack']}&flight_iata={flight_number}"
+    url = f"http://api.aviationstack.com/v1/flights?access_key={AVIATION_STACK_API_KEY}&flight_iata={flight_number}"
     response = requests.get(url)
     return response.json()
 

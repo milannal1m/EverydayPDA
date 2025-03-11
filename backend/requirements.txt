@@ -3,3 +3,4 @@ fastapi
 psycopg2
 asyncpg
 httpx
+requests
