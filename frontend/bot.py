@@ -24,7 +24,7 @@ async def start(update: Update, context: CallbackContext):
 
 # Echo-Handler
 async def echo(update: Update, context: CallbackContext):
-    await update.message.reply_text(api_handler.get_answer(update.message.text))
+    await update.message.reply_text(api_handler.get_answer(update.message.text)["answer"])
 
 # Hauptfunktion
 def main():

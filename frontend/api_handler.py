@@ -1,7 +1,7 @@
 import requests
 
 def get_answer(message: str) -> str:
-    url = "http://localhost:8000/answer"
+    url = "http://api:8000/answer"
     params = {"message": message}  # Query-Parameter
 
     response = requests.get(url, params=params)
