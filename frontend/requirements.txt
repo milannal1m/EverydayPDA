@@ -2,3 +2,4 @@ python-telegram-bot
 pytz
 apscheduler
 dotenv
+requests

@@ -2,7 +2,9 @@ import logging
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
 import os
+import api_handler
 from dotenv import load_dotenv
+
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 env_path = os.path.join(BASE_DIR, ".env")
@@ -22,7 +24,7 @@ async def start(update: Update, context: CallbackContext):
 
 # Echo-Handler
 async def echo(update: Update, context: CallbackContext):
-    await update.message.reply_text(update.message.text)
+    await update.message.reply_text(api_handler.get_answer(update.message.text))
 
 # Hauptfunktion
 def main():

@@ -24,10 +24,25 @@ services:
       - preferences_db
     networks:
       - backend_network
+      - frontend_network
+  
+  telgram-bot:
+    build: ./frontend
+    env_file:
+      - .env
+    container_name: telegram-bot
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    networks:
+      - frontend_network
 
 volumes:
   postgres_data:
 
 networks:
   backend_network:
+    driver: bridge
+  frontend_network:
     driver: bridge
