@@ -79,28 +79,55 @@ async def news(update: Update, context: CallbackContext):
     await update.message.reply_text(api_handler.post_preferences(update.effective_user.id, user_info))
 
 
-    await update.message.reply_text("Gib /menu ein, um das Menü zu öffnen.")
+    await update.message.reply_text("Klicke jederzeit auf das Menü, um die Präferenzen zu ändern.")
 
 
 
     return ConversationHandler.END
 
-async def menu(update: Update, context: CallbackContext):
+async def preferences(update: Update, context: CallbackContext):
     keyboard = [
-        [InlineKeyboardButton("Hilfe", callback_data="help")],
-        [InlineKeyboardButton("Präferenzen", callback_data="preferences")],
+        [InlineKeyboardButton("Kurs", callback_data="kurs"), InlineKeyboardButton("Mensa", callback_data="mensa")],
+        [InlineKeyboardButton("Wohnort", callback_data="wohnort"), InlineKeyboardButton("Transport", callback_data="transport")],
+        [InlineKeyboardButton("Aktien", callback_data="aktien"), InlineKeyboardButton("Nachrichten", callback_data="news")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("Bitte wähle eine Option:", reply_markup=reply_markup)
+    await update.message.reply_text("Welche Präferenz möchtest du ändern?:", reply_markup=reply_markup)
 
 async def button_click(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
 
-    if query.data == "help":
-        await query.message.reply_text("Hier ist die Github-Seite: [Link zur Hilfe](https://github.com/milannal1m/EverydayPDA)", parse_mode="Markdown")
-    elif query.data == "preferences":
-        await query.message.reply_text("Hier kannst du in Zukunft deine Präferenzen ändern. Gerade geht es noch nicht. 😅")
+    if query.data == "kurs":
+        await query.message.reply_text("Was ist dein neuer Kurs?", parse_mode="Markdown")
+    elif query.data == "mensa":
+        await query.message.reply_text("Was ist deine neue Mensa?", parse_mode="Markdown")
+    elif query.data == "wohnort":
+        await query.message.reply_text("Was ist dein neuer Wohnort?", parse_mode="Markdown")
+    elif query.data == "transport":
+        await query.message.reply_text("Was ist dein neues Transportmittel?", parse_mode="Markdown")
+    elif query.data == "aktien":
+        keyboard = [
+            [InlineKeyboardButton("Aktien löschen", callback_data="aktien_delete")],
+            [InlineKeyboardButton("Aktien hinzufügen", callback_data="aktien_add")],
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.message.reply_text("Wähle eine Option aus:", reply_markup=reply_markup)
+    elif query.data == "news":
+        keyboard = [
+            [InlineKeyboardButton("Kurs", callback_data="news_delete")],
+            [InlineKeyboardButton("Mensa", callback_data="news_add")],
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.message.reply_text("Wähle eine Option aus:", reply_markup=reply_markup)
+    elif query.data == "aktien_delete":
+        await query.message.reply_text("Welche Aktien möchtest du löschen?", parse_mode="Markdown")
+    elif query.data == "aktien_add":
+        await query.message.reply_text("Welche Aktien möchtest du hinzufügen?", parse_mode="Markdown")
+    elif query.data == "news_delete":
+        await query.message.reply_text("Welche Nachrichtenquellen möchtest du löschen?", parse_mode="Markdown")
+    elif query.data == "news_add":
+        await query.message.reply_text("Welche Nachrichtenquellen möchtest du hinzufügen?", parse_mode="Markdown")
 
 async def echo(update: Update, context: CallbackContext):
     await update.message.reply_text(api_handler.get_answer(update.message.text))
@@ -122,7 +149,7 @@ def main():
     )
 
     application.add_handler(conv_handler)
-    application.add_handler(CommandHandler("menu", menu))
+    application.add_handler(CommandHandler("preferences", preferences))
     application.add_handler(CallbackQueryHandler(button_click))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
 
