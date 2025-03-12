@@ -45,12 +45,11 @@ class User(BaseModel):
 @app.post("/preferences/init")
 async def init_preferences(user: User):
     conn = await get_db_connection()
-    async with (await conn.transaction()):
+    async with conn.transaction():
         check_query = "SELECT COUNT(*) FROM users WHERE username = $1"
         existing = await conn.fetchval(check_query, user.username)
 
         if existing > 0:
-            await conn.close()
             raise HTTPException(status_code=400, detail="User already exists")
 
         insert_user_query = """
