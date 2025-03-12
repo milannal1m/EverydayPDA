@@ -46,4 +46,4 @@ def post_preferences(user_id: int, preferences: dict) -> str:
         else:
             return(response.status_code + ": " + "Fehler bei der Anfrage an die API.")
     except:
-        return "Ich kann mich gerade nicht mit der API verbinden."
+        return "Du hast deine Präferenzen anscheinend schon initialisiert."
