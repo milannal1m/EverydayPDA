@@ -117,6 +117,74 @@ async def get_preferences(username: str) -> Optional[User]:
     else:
         raise HTTPException(status_code=404, detail="User not found")
 
-#@app.put("/preferences/{username}")
-#def update_preferences():
-#    return {"Hello": "World"}
+from pydantic import BaseModel
+from typing import List, Optional
+
+class UserUpdate(BaseModel):
+    course: Optional[str] = None
+    cafeteria: Optional[str] = None
+    city: Optional[str] = None
+    preferred_transport_medium: Optional[str] = None
+    add_stocks: Optional[List[str]] = []
+    delete_stocks: Optional[List[str]] = []
+    add_news: Optional[List[str]] = []
+    delete_news: Optional[List[str]] = []
+
+async def __update_list_preferences(conn, user_id, items, table, id_column, name_column, link_table, link_column):
+    """Fügt Elemente hinzu oder entfernt sie basierend auf den gegebenen Listen."""
+    add_items = items.get("add", [])
+    delete_items = items.get("delete", [])
+    
+    if add_items:
+        for item_name in add_items:
+            item_id = await conn.fetchval(f"SELECT {id_column} FROM {table} WHERE {name_column} = $1", item_name)
+            if not item_id:
+                item_id = await conn.fetchval(f"INSERT INTO {table} ({name_column}) VALUES ($1) RETURNING {id_column}", item_name)
+            await conn.execute(f"INSERT INTO {link_table} (u_id, {link_column}) VALUES ($1, $2) ON CONFLICT DO NOTHING", user_id, item_id)
+    
+    if delete_items:
+        for item_name in delete_items:
+            await conn.execute(f"DELETE FROM {link_table} WHERE u_id = $1 AND {link_column} = (SELECT {id_column} FROM {table} WHERE {name_column} = $2)", user_id, item_name)
+
+@app.put("/preferences/{username}")
+async def update_preferences(username: str, user: UserUpdate):
+    conn = await get_db_connection()
+    async with conn.transaction():
+        check_query = "SELECT u_id FROM users WHERE username = $1"
+        user_id = await conn.fetchval(check_query, username)
+        
+        if not user_id:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        update_fields = []
+        update_values = []
+        
+        if user.course:
+            update_fields.append("course = $1")
+            update_values.append(user.course)
+        if user.cafeteria:
+            update_fields.append("cafeteria = $2")
+            update_values.append(user.cafeteria)
+        if user.city:
+            update_fields.append("city = $3")
+            update_values.append(user.city)
+        if user.preferred_transport_medium:
+            update_fields.append("preferred_transport_medium = $4")
+            update_values.append(user.preferred_transport_medium)
+        
+        if update_fields:
+            update_query = f"""
+                UPDATE users
+                SET {', '.join(update_fields)}
+                WHERE u_id = $5
+            """
+            await conn.execute(update_query, *update_values, user_id)
+        
+        # Aktien aktualisieren
+        await __update_list_preferences(conn, user_id, {"add": user.add_stocks, "delete": user.delete_stocks}, "stocks", "s_id", "stock_name", "user_stocks", "s_id")
+        
+        # News aktualisieren
+        await __update_list_preferences(conn, user_id, {"add": user.add_news, "delete": user.delete_news}, "news", "n_id", "news_name", "user_news", "n_id")
+        
+    await conn.close()
+    return {"message": "User preferences updated successfully"}
