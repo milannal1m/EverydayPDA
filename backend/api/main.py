@@ -3,15 +3,21 @@ import asyncpg
 from typing import Dict, List, Optional
 from pydantic import BaseModel 
 from fastapi.middleware.cors import CORSMiddleware
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from llm_fetchers.llm import ChatGPTProcessor
+
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Erlaubt alle Ursprünge (Achtung: Sicherheitsrisiko!)
+    allow_origins=["*"], 
     allow_credentials=True,
-    allow_methods=["*"],  # Erlaubt alle Methoden (GET, POST, etc.)
-    allow_headers=["*"],  # Erlaubt alle Header
+    allow_methods=["*"],  
+    allow_headers=["*"],  
 )
 
 DATABASE_URL = "postgresql://user:password@preferences_db:5432/preferences_db"
@@ -20,10 +26,11 @@ async def get_db_connection():
     conn = await asyncpg.connect(DATABASE_URL)
     return conn
 
+chatGPTProcessor = ChatGPTProcessor()
+
 @app.get("/answer")
 def get_answer(message: str = Query(..., min_length=1)):
-    #answer = llm.getAnswer()
-    answer = "I am a chatbot and this is my answer to your question: " + message
+    answer = chatGPTProcessor.process_input(message)
     return {"answer": answer}
 
 class User(BaseModel):
