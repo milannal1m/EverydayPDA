@@ -32,7 +32,7 @@ async def start(update: Update, context: CallbackContext):
     await update.message.reply_text(f"Hallo {user_name}! Ich bin EverydayPDA, dein persönlicher Assistent! 🤖\nIch werde ein paar Fragen stellen, um dich besser kennen zu lernen. 😊")
     await update.message.reply_text("Was studierst du?  (z. B. Informatik)")
     
-    return KURS  # Wechselt in den Zustand "KURS"
+    return KURS
 
 async def kurs(update: Update, context: CallbackContext):
     user_data_store[update.effective_user.id] = {"kurs": update.message.text}
@@ -51,33 +51,38 @@ async def wohnort(update: Update, context: CallbackContext):
 
 async def transport(update: Update, context: CallbackContext):
     user_data_store[update.effective_user.id]["transport"] = update.message.text
-    await update.message.reply_text("Was sind deine Lieblingsaktien? (z. B. Apple, Tesla)")
+    await update.message.reply_text("Welche Lieblingsaktien hast du? (Mehrere mit Komma trennen)")
     return AKTIEN
 
 async def aktien(update: Update, context: CallbackContext):
-    user_data_store[update.effective_user.id]["aktien"] = update.message.text
-    await update.message.reply_text("Was ist deine bevorzugte Nachrichtenquelle?")
+    user_data_store[update.effective_user.id]["aktien"] = [aktie.strip() for aktie in update.message.text.split(",")]
+    await update.message.reply_text("Welche bevorzugten Nachrichtenquellen hast du? (Mehrere mit Komma trennen)")
     return NEWS
 
 async def news(update: Update, context: CallbackContext):
-    user_data_store[update.effective_user.id]["news"] = update.message.text
+    user_data_store[update.effective_user.id]["news"] = [news.strip() for news in update.message.text.split(",")]
 
-    # Zeige die gesammelten Daten an
     user_info = user_data_store[update.effective_user.id]
     summary = (f"Danke für deine Antworten! Hier ist deine Übersicht:\n\n"
                f"📚 Kurs: {user_info['kurs']}\n"
                f"🍽️ Mensa: {user_info['mensa']}\n"
                f"🏠 Wohnort: {user_info['wohnort']}\n"
                f"🚆 Transport: {user_info['transport']}\n"
-               f"📈 Lieblingsaktien: {user_info['aktien']}\n"
-               f"📰 Nachrichtenquelle: {user_info['news']}")
+               f"📈 Lieblingsaktien: {', '.join(user_info['aktien'])}\n"
+               f"📰 Nachrichtenquellen: {', '.join(user_info['news'])}")
 
     await update.message.reply_text(summary)
+    
+    # Speichere die Präferenzen in der Datenbank
+    await update.message.reply_text(api_handler.post_preferences(update.effective_user.id, user_info))
+
+
     await update.message.reply_text("Gib /menu ein, um das Menü zu öffnen.")
 
-    return ConversationHandler.END  # Beendet die Konversation
 
-# Menü anzeigen
+
+    return ConversationHandler.END
+
 async def menu(update: Update, context: CallbackContext):
     keyboard = [
         [InlineKeyboardButton("Hilfe", callback_data="help")],
@@ -86,7 +91,6 @@ async def menu(update: Update, context: CallbackContext):
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text("Bitte wähle eine Option:", reply_markup=reply_markup)
 
-# Antwort auf Menü-Buttons
 async def button_click(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
@@ -96,15 +100,12 @@ async def button_click(update: Update, context: CallbackContext):
     elif query.data == "preferences":
         await query.message.reply_text("Hier kannst du in Zukunft deine Präferenzen ändern. Gerade geht es noch nicht. 😅")
 
-# Echo-Handler für normale Nachrichten
 async def echo(update: Update, context: CallbackContext):
     await update.message.reply_text(api_handler.get_answer(update.message.text))
 
-# Hauptfunktion
 def main():
     application = Application.builder().token(TELEGRAM_API_KEY).build()
 
-    # ConversationHandler für die Fragen
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
@@ -118,13 +119,11 @@ def main():
         fallbacks=[],
     )
 
-    # Befehle und Handler hinzufügen
     application.add_handler(conv_handler)
     application.add_handler(CommandHandler("menu", menu))
     application.add_handler(CallbackQueryHandler(button_click))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
 
-    # Startet den Bot
     application.run_polling()
 
 if __name__ == "__main__":
