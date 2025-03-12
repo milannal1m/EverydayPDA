@@ -74,6 +74,8 @@ async def news(update: Update, context: CallbackContext):
     await update.message.reply_text(summary)
     
     # Speichere die Präferenzen in der Datenbank
+    print(user_info["aktien"])
+    print(user_info["news"])
     await update.message.reply_text(api_handler.post_preferences(update.effective_user.id, user_info))
 
 
