@@ -20,11 +20,11 @@ logger = logging.getLogger(__name__)
 
 # Start-Befehl
 async def start(update: Update, context: CallbackContext):
-    await update.message.reply_text("Hallo! Ich bin dein Telegram-Bot.")
+    await update.message.reply_text("Hallo! Ich bin EverydayPDA dein persönlicher Assistent. Schön dich kennenzulernen! 😊")
 
 # Echo-Handler
 async def echo(update: Update, context: CallbackContext):
-    await update.message.reply_text(api_handler.get_answer(update.message.text)["answer"])
+    await update.message.reply_text(api_handler.get_answer(update.message.text))
 
 # Hauptfunktion
 def main():
