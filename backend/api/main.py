@@ -8,6 +8,7 @@ import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from llm_fetchers.llm import ChatGPTProcessor
+import service_fetchers.services as services
 
 
 app = FastAPI()
@@ -149,42 +150,41 @@ async def __update_list_preferences(conn, user_id, items, table, id_column, name
 @app.put("/preferences/{username}")
 async def update_preferences(username: str, user: UserUpdate):
     conn = await get_db_connection()
-    async with conn.transaction():
-        check_query = "SELECT u_id FROM users WHERE username = $1"
-        user_id = await conn.fetchval(check_query, username)
-        
-        if not user_id:
-            raise HTTPException(status_code=404, detail="User not found")
-        
-        update_fields = []
-        update_values = []
-        
-        if user.course:
-            update_fields.append("course = $1")
-            update_values.append(user.course)
-        if user.cafeteria:
-            update_fields.append("cafeteria = $2")
-            update_values.append(user.cafeteria)
-        if user.city:
-            update_fields.append("city = $3")
-            update_values.append(user.city)
-        if user.preferred_transport_medium:
-            update_fields.append("preferred_transport_medium = $4")
-            update_values.append(user.preferred_transport_medium)
-        
-        if update_fields:
-            update_query = f"""
-                UPDATE users
-                SET {', '.join(update_fields)}
-                WHERE u_id = $5
-            """
-            await conn.execute(update_query, *update_values, user_id)
-        
-        # Aktien aktualisieren
-        await __update_list_preferences(conn, user_id, {"add": user.add_stocks, "delete": user.delete_stocks}, "stocks", "s_id", "stock_name", "user_stocks", "s_id")
-        
-        # News aktualisieren
-        await __update_list_preferences(conn, user_id, {"add": user.add_news, "delete": user.delete_news}, "news", "n_id", "news_name", "user_news", "n_id")
-        
-    await conn.close()
-    return {"message": "User preferences updated successfully"}
+    try:
+        async with conn.transaction():
+            check_query = "SELECT u_id FROM users WHERE username = $1"
+            user_id = await conn.fetchval(check_query, username)
+
+            if not user_id:
+                raise HTTPException(status_code=404, detail="User not found")
+
+            update_fields = []
+            update_values = []
+
+            if user.course:
+                update_fields.append("course = $1")
+                update_values.append(user.course)
+            if user.cafeteria:
+                update_fields.append("cafeteria = $2")
+                update_values.append(user.cafeteria)
+            if user.city:
+                update_fields.append("city = $3")
+                update_values.append(user.city)
+            if user.preferred_transport_medium:
+                update_fields.append("preferred_transport_medium = $4")
+                update_values.append(user.preferred_transport_medium)
+
+            if update_fields:
+                update_query = f"""
+                    UPDATE users
+                    SET {', '.join(update_fields)}
+                    WHERE u_id = $5
+                """
+                await conn.execute(update_query, *update_values, user_id)
+
+            await __update_list_preferences(conn, user_id, {"add": user.add_stocks, "delete": user.delete_stocks}, "stocks", "s_id", "stock_name", "user_stocks", "s_id")
+            await __update_list_preferences(conn, user_id, {"add": user.add_news, "delete": user.delete_news}, "news", "n_id", "news_name", "user_news", "n_id")
+
+        return {"message": "User preferences updated successfully"}
+    finally:
+        await conn.close()  # Sicherstellen, dass close() immer aufgerufen wird

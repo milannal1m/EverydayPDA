@@ -1,6 +1,8 @@
 
 # EverydayPDA
 
+![Coverage](https://codecov.io/gh/milannal1m/EverydayPDA/branch/main/graph/badge.svg)
+
 ## Table of Contents
 
 1. [API](#api)
