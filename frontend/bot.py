@@ -35,7 +35,7 @@ async def start(update: Update, context: CallbackContext):
     user_name = update.effective_user.first_name
     await update.message.reply_text(f"Hallo {user_name}! Ich bin EverydayPDA, dein persönlicher Assistent! 🤖\n"
                                     "Ich werde ein paar Fragen stellen, um dich besser kennenzulernen. 😊")
-    await update.message.reply_text("Was studierst du? (z. B. Informatik)")
+    await update.message.reply_text("In welchem KURS studierst du? (z. B. IN22)")
     return KURS
 
 async def kurs(update: Update, context: CallbackContext):
@@ -118,8 +118,8 @@ async def button_click(update: Update, context: CallbackContext):
         await query.message.reply_text("Wähle eine Option aus:", reply_markup=reply_markup)
     elif query.data == "news":
         keyboard = [
-            [InlineKeyboardButton("Kurs", callback_data="news_delete")],
-            [InlineKeyboardButton("Mensa", callback_data="news_add")],
+            [InlineKeyboardButton("Nachrichtenquellen löschen", callback_data="news_delete")],
+            [InlineKeyboardButton("Nachrichtenquellen hinzufügen", callback_data="news_add")],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.message.reply_text("Wähle eine Option aus:", reply_markup=reply_markup)
