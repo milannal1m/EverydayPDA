@@ -18,7 +18,10 @@ logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 # Definiere Zustände für den Konversationsablauf
-(KURS, MENSA, WOHNORT, TRANSPORT, AKTIEN, NEWS, INIT_END) = range(7)
+(KURS, MENSA, WOHNORT, TRANSPORT, AKTIEN, NEWS) = range(6)
+
+# Definiere Zustände für das Aktualisieren von Präferenzen
+(BUTTON, KURS_UPDATE, MENSA_UPDATE, WOHNORT_UPDATE, TRANSPORT_UPDATE, AKTIEN_DELETE, AKTIEN_ADD, NEWS_DELETE, NEWS_ADD) = range(6, 15)
 
 # Nutzer-Daten speichern
 user_data_store = {}
@@ -26,7 +29,7 @@ user_data_store = {}
 async def save_and_ask_next(update: Update, context: CallbackContext, key: str, next_question: str, next_state: int):
     """Speichert die Benutzereingabe und stellt die nächste Frage."""
     user_id = update.effective_user.id
-    user_data_store.setdefault(user_id, {})[key] = update.message.text  # Antwort speichern
+    user_data_store.setdefault(user_id, {})[key] = update.message.text.strip()  # Antwort speichern
     await update.message.reply_text(next_question)  # Nächste Frage senden
     return next_state  # Zustand zurückgeben
 
@@ -85,7 +88,7 @@ async def init_end(update: Update, context: CallbackContext):
     return ConversationHandler.END
 
 async def preferences(update: Update, context: CallbackContext):
-    if api_handler.get_preferences(update.effective_user.id)[1] == "success":
+    #if api_handler.get_preferences(update.effective_user.id)[1] == "success":
         await update.message.reply_text(api_handler.get_preferences(update.effective_user.id)[0])
         keyboard = [
             [InlineKeyboardButton("📚 Kurs", callback_data="kurs"), InlineKeyboardButton("🍽️ Mensa", callback_data="mensa")],
@@ -94,21 +97,70 @@ async def preferences(update: Update, context: CallbackContext):
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await update.message.reply_text("Welche Präferenz möchtest du ändern?:", reply_markup=reply_markup)
-    else:
-        await update.message.reply_text(api_handler.get_preferences(update.effective_user.id)[0])
+        return BUTTON
+    #else:
+        #await update.message.reply_text(api_handler.get_preferences(update.effective_user.id)[0])
+
+async def update_preference(update: Update, context: CallbackContext, state: int, message: str):
+    """Echot die Nutzereingabe erstmal zurück."""
+    query = update.callback_query
+
+    await query.message.reply_text(message, parse_mode="Markdown")
+    return state
+
+# Hier kannst du die Funktionen für die anderen Präferenzen ergänzen
+async def kurs_update(update: Update, context: CallbackContext):
+    kurs = update.message.text.strip()
+    await update.message.reply_text(f"Das ist dein neuer Kurs: {kurs}")
+    return ConversationHandler.END
+
+async def mensa_update(update: Update, context: CallbackContext):
+    mensa = update.message.text.strip()
+    await update.message.reply_text(f"Das ist deine neue Mensa: {mensa}")
+    return ConversationHandler.END
+
+async def wohnort_update(update: Update, context: CallbackContext):
+    wohnort = update.message.text.strip()
+    await update.message.reply_text(f"Das ist dein neuer Wohnort: {wohnort}")
+    return ConversationHandler.END 
+
+async def transport_update(update: Update, context: CallbackContext):
+    transport = update.message.text.strip()
+    await update.message.reply_text(f"Das ist dein neues Transportmittel: {transport}")
+    return ConversationHandler.END 
+
+async def aktien_delete(update: Update, context: CallbackContext):
+    aktien = update.message.text.strip()
+    await update.message.reply_text(f"Das sind deine gelöschten Aktien: {aktien}")
+    return ConversationHandler.END
+
+async def aktien_add(update: Update, context: CallbackContext):
+    aktien = update.message.text.strip()
+    await update.message.reply_text(f"Das sind deine hinzugefügten Aktien: {aktien}")
+    return ConversationHandler.END
+
+async def news_delete(update: Update, context: CallbackContext):
+    news = update.message.text.strip()
+    await update.message.reply_text(f"Das sind deine gelöschten Nachrichtenquellen: {news}")
+    return ConversationHandler.END
+
+async def news_add(update: Update, context: CallbackContext): 
+    news = update.message.text.strip()
+    await update.message.reply_text(f"Das sind deine hinzugefügten Nachrichtenquellen: {news}")
+    return ConversationHandler.END
 
 async def button_click(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
 
     if query.data == "kurs":
-        await query.message.reply_text("Was ist dein neuer Kurs?", parse_mode="Markdown")
+        return await update_preference(update, context, KURS_UPDATE, "Was ist dein neuer Kurs?")
     elif query.data == "mensa":
-        await query.message.reply_text("Was ist deine neue Mensa?", parse_mode="Markdown")
+        return await update_preference(update, context, MENSA_UPDATE, "Was ist deine neue Mensa?")
     elif query.data == "wohnort":
-        await query.message.reply_text("Was ist dein neuer Wohnort?", parse_mode="Markdown")
+        return await update_preference(update, context, WOHNORT_UPDATE, "Was ist dein neuer Wohnort?")
     elif query.data == "transport":
-        await query.message.reply_text("Was ist dein neues Transportmittel?", parse_mode="Markdown")
+        return await update_preference(update, context, TRANSPORT_UPDATE, "Was ist dein neuer Transport?")
     elif query.data == "aktien":
         keyboard = [
             [InlineKeyboardButton("Aktien löschen", callback_data="aktien_delete")],
@@ -124,15 +176,15 @@ async def button_click(update: Update, context: CallbackContext):
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.message.reply_text("Wähle eine Option aus:", reply_markup=reply_markup)
     elif query.data == "aktien_delete":
-        await query.message.reply_text("Welche Aktien möchtest du löschen?", parse_mode="Markdown")
+        return await update_preference(update, context, AKTIEN_DELETE, "Welche Aktien möchtest du entfernen?")
     elif query.data == "aktien_add":
-        await query.message.reply_text("Welche Aktien möchtest du hinzufügen?", parse_mode="Markdown")
+        return await update_preference(update, context, AKTIEN_ADD, "Welche Aktien möchtest du hinzufügen?")
     elif query.data == "news_delete":
-        await query.message.reply_text("Welche Nachrichtenquellen möchtest du löschen?", parse_mode="Markdown")
+        return await update_preference(update, context, NEWS_DELETE, "Welche Nachrichtenquellen möchtest du entfernen?")
     elif query.data == "news_add":
-        await query.message.reply_text("Welche Nachrichtenquellen möchtest du hinzufügen?", parse_mode="Markdown")
+        return await update_preference(update, context, NEWS_ADD, "Welche Nachrichtenquellen möchtest du hinzufügen?")
 
-async def echo(update: Update, context: CallbackContext):
+async def answer(update: Update, context: CallbackContext):
     await update.message.reply_text(api_handler.get_answer(update.message.text))
 
 def main():
@@ -151,10 +203,26 @@ def main():
         fallbacks=[],
     )
 
+    update_handler = ConversationHandler(
+        entry_points=[CommandHandler("preferences", preferences)],
+        states={
+            BUTTON: [CallbackQueryHandler(button_click)],
+            KURS_UPDATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, kurs_update)],
+            MENSA_UPDATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, mensa_update)],
+            WOHNORT_UPDATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, wohnort_update)],
+            TRANSPORT_UPDATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, transport_update)],
+            AKTIEN_DELETE: [MessageHandler(filters.TEXT & ~filters.COMMAND, aktien_delete)],
+            AKTIEN_ADD: [MessageHandler(filters.TEXT & ~filters.COMMAND, aktien_add)],
+            NEWS_DELETE: [MessageHandler(filters.TEXT & ~filters.COMMAND, news_delete)],
+            NEWS_ADD: [MessageHandler(filters.TEXT & ~filters.COMMAND, news_add)],
+        },
+        fallbacks=[],
+    )
+
     application.add_handler(conv_handler)
-    application.add_handler(CommandHandler("preferences", preferences))
-    application.add_handler(CallbackQueryHandler(button_click))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+    application.add_handler(update_handler)
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, answer))
+
 
     application.run_polling()
 
