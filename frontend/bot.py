@@ -36,7 +36,8 @@ async def save_and_ask_next(update: Update, context: CallbackContext, key: str, 
 async def start(update: Update, context: CallbackContext):
     """Startet die Unterhaltung."""
     user_name = update.effective_user.first_name
-    await update.message.reply_text(f"Hallo {user_name}! Ich bin EverydayPDA, dein persönlicher Assistent! 🤖\n"
+    user_id = update.effective_user.id
+    await update.message.reply_text(f"Hallo {user_name} mit der User-ID: {user_id}! Ich bin EverydayPDA, dein persönlicher Assistent! 🤖\n"
                                     "Ich werde ein paar Fragen stellen, um dich besser kennenzulernen. 😊")
     await update.message.reply_text("In welchem KURS studierst du? (z. B. IN22)")
     return KURS
@@ -114,42 +115,50 @@ async def update_preference(update: Update, context: CallbackContext, state: int
 # Hier kannst du die Funktionen für die anderen Präferenzen ergänzen
 async def kurs_update(update: Update, context: CallbackContext):
     kurs = update.message.text.strip()
-    await update.message.reply_text(f"Das ist dein neuer Kurs: {kurs}")
+    #await update.message.reply_text(f"Das ist dein neuer Kurs: {kurs}")
+    await update.message.reply_text(api_handler.put_preference(update.effective_user.id, "course", kurs))
     return ConversationHandler.END
 
 async def mensa_update(update: Update, context: CallbackContext):
     mensa = update.message.text.strip()
-    await update.message.reply_text(f"Das ist deine neue Mensa: {mensa}")
+    #await update.message.reply_text(f"Das ist deine neue Mensa: {mensa}")
+    await update.message.reply_text(api_handler.put_preference(update.effective_user.id, "cafeteria", mensa))
     return ConversationHandler.END
 
 async def wohnort_update(update: Update, context: CallbackContext):
     wohnort = update.message.text.strip()
-    await update.message.reply_text(f"Das ist dein neuer Wohnort: {wohnort}")
+    #await update.message.reply_text(f"Das ist dein neuer Wohnort: {wohnort}")
+    await update.message.reply_text(api_handler.put_preference(update.effective_user.id, "city", wohnort))
     return ConversationHandler.END 
 
 async def transport_update(update: Update, context: CallbackContext):
     transport = update.message.text.strip()
-    await update.message.reply_text(f"Das ist dein neues Transportmittel: {transport}")
+    #await update.message.reply_text(f"Das ist dein neues Transportmittel: {transport}")
+    await update.message.reply_text(api_handler.put_preference(update.effective_user.id, "preferred_transport_medium", transport))
     return ConversationHandler.END 
 
 async def aktien_delete(update: Update, context: CallbackContext):
     aktien = update.message.text.strip()
-    await update.message.reply_text(f"Das sind deine gelöschten Aktien: {aktien}")
+    #await update.message.reply_text(f"Das sind deine gelöschten Aktien: {aktien}")
+    await update.message.reply_text(api_handler.put_preference(update.effective_user.id, "delete_stocks", aktien))
     return ConversationHandler.END
 
 async def aktien_add(update: Update, context: CallbackContext):
-    aktien = update.message.text.strip()
-    await update.message.reply_text(f"Das sind deine hinzugefügten Aktien: {aktien}")
+    aktien = [aktie.strip() for aktie in update.message.text.split(",")]
+    #await update.message.reply_text(f"Das sind deine hinzugefügten Aktien: {aktien}")
+    await update.message.reply_text(api_handler.put_preference(update.effective_user.id, "add_stocks", aktien))
     return ConversationHandler.END
 
 async def news_delete(update: Update, context: CallbackContext):
-    news = update.message.text.strip()
-    await update.message.reply_text(f"Das sind deine gelöschten Nachrichtenquellen: {news}")
+    news = [news.strip() for news in update.message.text.split(",")]
+    #await update.message.reply_text(f"Das sind deine gelöschten Nachrichtenquellen: {news}")
+    await update.message.reply_text(api_handler.put_preference(update.effective_user.id, "delete_news", news))
     return ConversationHandler.END
 
 async def news_add(update: Update, context: CallbackContext): 
     news = update.message.text.strip()
-    await update.message.reply_text(f"Das sind deine hinzugefügten Nachrichtenquellen: {news}")
+    #await update.message.reply_text(f"Das sind deine hinzugefügten Nachrichtenquellen: {news}")
+    await update.message.reply_text(api_handler.put_preference(update.effective_user.id, "add_news", news))
     return ConversationHandler.END
 
 async def button_click(update: Update, context: CallbackContext):

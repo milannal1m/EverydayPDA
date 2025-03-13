@@ -68,20 +68,34 @@ def post_preferences(user_id: int, preferences: dict) -> str:
     except:
         return "Du hast deine Präferenzen anscheinend schon initialisiert."
 
-def update_preference(user_id: int, preference: str, new_value: str) -> str:
-    url = "http://api:8000/preferences/update"
-    data = {
-        "username": str(user_id),
-        "preference": preference,
-        "new_value": new_value
-    }
+import requests
 
+def put_preference(user_id: int, key: str, new_value):
+    url = f"http://api:8000/preferences/{user_id}"
+    
     try:
-        response = requests.put(url, json=data)
+        # Aktuelle Präferenzen abrufen
+        response = requests.get(url)
+        
+        if response.status_code != 200:
+            return f"Fehler beim Abrufen der aktuellen Präferenzen: {response.status_code}"
 
-        if response.status_code == 200:
-            return "Deine Präferenz wurde erfolgreich geändert."
+        current_data = response.json()
+
+        # Überprüfen, ob der Schlüssel existiert
+        if key not in current_data:
+            return f"Ungültige Präferenz: {key}"
+
+        # Nur den gewünschten Key aktualisieren
+        current_data[key] = new_value
+
+        # Aktualisierte Präferenzen senden
+        put_response = requests.put(url, json=current_data)
+
+        if put_response.status_code == 200:
+            return f"Deine Eingabe: {new_value} wurde erfolgreich verarbeitet."
         else:
-            return(response.status_code + ": " + "Fehler bei der Anfrage an die API.")
-    except:
+            return f"Fehler bei der Aktualisierung: {put_response.status_code}"
+
+    except requests.RequestException:
         return "Ich kann gerade deine Präferenz nicht ändern."
