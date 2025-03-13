@@ -18,81 +18,84 @@ logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 # Definiere Zustände für den Konversationsablauf
-(KURS, MENSA, WOHNORT, TRANSPORT, AKTIEN, NEWS) = range(6)
+(KURS, MENSA, WOHNORT, TRANSPORT, AKTIEN, NEWS, INIT_END) = range(7)
 
 # Nutzer-Daten speichern
 user_data_store = {}
 
-# Start-Befehl mit Fragenabfolge
-async def start(update: Update, context: CallbackContext):
-    user_name = update.effective_user.first_name
+async def save_and_ask_next(update: Update, context: CallbackContext, key: str, next_question: str, next_state: int):
+    """Speichert die Benutzereingabe und stellt die nächste Frage."""
     user_id = update.effective_user.id
-    logger.info(f"User {user_name} mit ID {user_id} hat den Bot gestartet.")
+    user_data_store.setdefault(user_id, {})[key] = update.message.text  # Antwort speichern
+    await update.message.reply_text(next_question)  # Nächste Frage senden
+    return next_state  # Zustand zurückgeben
 
-    await update.message.reply_text(f"Hallo {user_name}! Ich bin EverydayPDA, dein persönlicher Assistent! 🤖\nIch werde ein paar Fragen stellen, um dich besser kennen zu lernen. 😊")
-    await update.message.reply_text("Was studierst du?  (z. B. Informatik)")
-    
+async def start(update: Update, context: CallbackContext):
+    """Startet die Unterhaltung."""
+    user_name = update.effective_user.first_name
+    await update.message.reply_text(f"Hallo {user_name}! Ich bin EverydayPDA, dein persönlicher Assistent! 🤖\n"
+                                    "Ich werde ein paar Fragen stellen, um dich besser kennenzulernen. 😊")
+    await update.message.reply_text("Was studierst du? (z. B. Informatik)")
     return KURS
 
 async def kurs(update: Update, context: CallbackContext):
-    user_data_store[update.effective_user.id] = {"kurs": update.message.text}
-    await update.message.reply_text("Wo ist deine Mensa (z. B. Mensa Zentral)?")
-    return MENSA
+    return await save_and_ask_next(update, context, "kurs", "Wo ist deine Mensa (z. B. Mensa Zentral)?", MENSA)
 
 async def mensa(update: Update, context: CallbackContext):
-    user_data_store[update.effective_user.id]["mensa"] = update.message.text
-    await update.message.reply_text("Wo lebst du?")
-    return WOHNORT
+    return await save_and_ask_next(update, context, "mensa", "Wo lebst du?", WOHNORT)
 
 async def wohnort(update: Update, context: CallbackContext):
-    user_data_store[update.effective_user.id]["wohnort"] = update.message.text
-    await update.message.reply_text("Was ist dein bevorzugtes Transportmittel?")
-    return TRANSPORT
+    return await save_and_ask_next(update, context, "wohnort", "Was ist dein bevorzugtes Transportmittel?", TRANSPORT)
 
 async def transport(update: Update, context: CallbackContext):
-    user_data_store[update.effective_user.id]["transport"] = update.message.text
-    await update.message.reply_text("Welche Lieblingsaktien hast du? (Mehrere mit Komma trennen)")
-    return AKTIEN
+    return await save_and_ask_next(update, context, "transport", "Welche Lieblingsaktien hast du? (Mehrere mit Komma trennen)", AKTIEN)
 
 async def aktien(update: Update, context: CallbackContext):
-    user_data_store[update.effective_user.id]["aktien"] = [aktie.strip() for aktie in update.message.text.split(",")]
+    """Speichert Aktien als Liste und stellt die nächste Frage."""
+    user_id = update.effective_user.id
+    user_data_store.setdefault(user_id, {})["aktien"] = [aktie.strip() for aktie in update.message.text.split(",")]
     await update.message.reply_text("Welche bevorzugten Nachrichtenquellen hast du? (Mehrere mit Komma trennen)")
     return NEWS
 
 async def news(update: Update, context: CallbackContext):
-    user_data_store[update.effective_user.id]["news"] = [news.strip() for news in update.message.text.split(",")]
+    """Speichert Nachrichtenquellen als Liste und zeigt die Zusammenfassung an."""
+    user_id = update.effective_user.id
+    user_data_store.setdefault(user_id, {})["news"] = [news.strip() for news in update.message.text.split(",")]
+    return await init_end(update, context)
 
-    user_info = user_data_store[update.effective_user.id]
+async def init_end(update: Update, context: CallbackContext):
+    """Zeigt die Übersicht der Nutzereingaben und speichert die Präferenzen."""
+    user_id = update.effective_user.id
+    user_info = user_data_store.get(user_id, {})
+
     summary = (f"Danke für deine Antworten! Hier ist deine Übersicht:\n\n"
-               f"📚 Kurs: {user_info['kurs']}\n"
-               f"🍽️ Mensa: {user_info['mensa']}\n"
-               f"🏠 Wohnort: {user_info['wohnort']}\n"
-               f"🚆 Transport: {user_info['transport']}\n"
-               f"📈 Lieblingsaktien: {', '.join(user_info['aktien'])}\n"
-               f"📰 Nachrichtenquellen: {', '.join(user_info['news'])}")
+               f"📚 Kurs: {user_info.get('kurs', 'Nicht angegeben')}\n"
+               f"🍽️ Mensa: {user_info.get('mensa', 'Nicht angegeben')}\n"
+               f"🏠 Wohnort: {user_info.get('wohnort', 'Nicht angegeben')}\n"
+               f"🚆 Transport: {user_info.get('transport', 'Nicht angegeben')}\n"
+               f"📈 Lieblingsaktien: {', '.join(user_info.get('aktien', []))}\n"
+               f"📰 Nachrichtenquellen: {', '.join(user_info.get('news', []))}")
 
     await update.message.reply_text(summary)
-    
-    # Speichere die Präferenzen in der Datenbank
-    print(user_info["aktien"])
-    print(user_info["news"])
-    await update.message.reply_text(api_handler.post_preferences(update.effective_user.id, user_info))
 
-
+    # Speichere die Präferenzen in der Datenbank (falls API vorhanden)
+    await update.message.reply_text(api_handler.post_preferences(user_id, user_info))
     await update.message.reply_text("Klicke jederzeit auf das Menü, um die Präferenzen zu ändern.")
-
-
 
     return ConversationHandler.END
 
 async def preferences(update: Update, context: CallbackContext):
-    keyboard = [
-        [InlineKeyboardButton("Kurs", callback_data="kurs"), InlineKeyboardButton("Mensa", callback_data="mensa")],
-        [InlineKeyboardButton("Wohnort", callback_data="wohnort"), InlineKeyboardButton("Transport", callback_data="transport")],
-        [InlineKeyboardButton("Aktien", callback_data="aktien"), InlineKeyboardButton("Nachrichten", callback_data="news")],
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("Welche Präferenz möchtest du ändern?:", reply_markup=reply_markup)
+    if api_handler.get_preferences(update.effective_user.id)[1] == "success":
+        await update.message.reply_text(api_handler.get_preferences(update.effective_user.id)[0])
+        keyboard = [
+            [InlineKeyboardButton("📚 Kurs", callback_data="kurs"), InlineKeyboardButton("🍽️ Mensa", callback_data="mensa")],
+            [InlineKeyboardButton("🏠 Wohnort", callback_data="wohnort"), InlineKeyboardButton("🚆 Transport", callback_data="transport")],
+            [InlineKeyboardButton("📈 Aktien", callback_data="aktien"), InlineKeyboardButton("📰 Nachrichten", callback_data="news")],
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await update.message.reply_text("Welche Präferenz möchtest du ändern?:", reply_markup=reply_markup)
+    else:
+        await update.message.reply_text(api_handler.get_preferences(update.effective_user.id)[0])
 
 async def button_click(update: Update, context: CallbackContext):
     query = update.callback_query

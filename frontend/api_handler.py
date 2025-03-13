@@ -25,6 +25,27 @@ def get_answer(message: str) -> str:
             return(response.status_code + ": " + "Fehler bei der Anfrage an die API.")
     except:
         return "Ich kann mich gerade nicht mit der API verbinden."
+    
+def get_preferences(user_id: int) -> tuple:
+    url = "http://api:8000/preferences"
+    params = {"username": str(user_id)}  # Query-Parameter
+
+    try:
+        response = requests.get(url, params=params)
+
+        if response.status_code == 200:
+            summary = (f"Hier ist deine Übersicht:\n\n"
+            f"📚 Kurs: {response.json()["course"]}\n"
+            f"🍽️ Mensa: {response.json()["cafeteria"]}\n"
+            f"🏠 Wohnort: {response.json()["city"]}\n"
+            f"🚆 Transport: {response.json()["preferred_transport_medium"]}\n"
+            f"📈 Lieblingsaktien: {', '.join(response.json()["stocks"])}\n"
+            f"📰 Nachrichtenquellen: {', '.join(response.json()["news"])}")
+            return(summary, "success")
+        else:
+            return(response.status_code + ": " + "Fehler bei der Azeige der Präferenzen.", "error")
+    except:
+        return "Ich kann gerade deine Präferenzen nicht abrufen.", "error"
 
 def post_preferences(user_id: int, preferences: dict) -> str:
     url = "http://api:8000/preferences/init"
@@ -47,3 +68,4 @@ def post_preferences(user_id: int, preferences: dict) -> str:
             return(response.status_code + ": " + "Fehler bei der Anfrage an die API.")
     except:
         return "Du hast deine Präferenzen anscheinend schon initialisiert."
+    
