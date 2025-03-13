@@ -29,6 +29,7 @@ def discover_and_run_tests():
     # Stoppe Coverage und gib das Ergebnis aus
     cov.stop()
     cov.save()
+    cov.xml_report(outfile="coverage.xml")
     cov.report()
 
 if __name__ == "__main__":
