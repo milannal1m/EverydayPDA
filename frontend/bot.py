@@ -87,6 +87,9 @@ async def init_end(update: Update, context: CallbackContext):
 
     return ConversationHandler.END
 
+async def show_preferences(update: Update, context: CallbackContext):
+    await update.message.reply_text(api_handler.get_preferences(update.effective_user.id)[0])
+
 async def preferences(update: Update, context: CallbackContext):
     #if api_handler.get_preferences(update.effective_user.id)[1] == "success":
         await update.message.reply_text(api_handler.get_preferences(update.effective_user.id)[0])
@@ -204,7 +207,7 @@ def main():
     )
 
     update_handler = ConversationHandler(
-        entry_points=[CommandHandler("preferences", preferences)],
+        entry_points=[CommandHandler("changepref", preferences)],
         states={
             BUTTON: [CallbackQueryHandler(button_click)],
             KURS_UPDATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, kurs_update)],
@@ -222,6 +225,7 @@ def main():
     application.add_handler(conv_handler)
     application.add_handler(update_handler)
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, answer))
+    application.add_handler(CommandHandler("showpref", show_preferences))
 
 
     application.run_polling()
