@@ -1,0 +1,12 @@
+apscheduler
+asyncpg
+coverage
+dotenv
+fastapi
+httpx
+openai==0.28.0
+psycopg2
+python-telegram-bot
+pytz
+requests
+uvicorn
