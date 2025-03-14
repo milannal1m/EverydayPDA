@@ -20,12 +20,12 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Abhängigkeiten installieren
+      - name: Install Dependencies
         run: |
           find . -mindepth 2 -name "requirements.txt" -exec cat {} \; -exec echo \; | sort -u > requirements.txt
           pip install -r requirements.txt
 
-      - name: Umgebungsvariablen setzen
+      - name: Set Environment Variables
         run: |
           pwd
           touch /home/runner/work/EverydayPDA/EverydayPDA/.env
@@ -40,14 +40,14 @@ jobs:
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> /home/runner/work/EverydayPDA/EverydayPDA/.env
           ls -la /home/runner/work/EverydayPDA/EverydayPDA
 
-      - name: Coverage Report aktualisieren
+      - name: Test Coverage Update
         run: 
           python test_coverage.py
 
-      - name: Änderungen committen
+      - name: Commit and Push
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add .
-          git commit -m "Automatische Aktualisierung der Coverage" || echo "Keine Änderungen"
+          git commit -m "Update Test Coverage" || echo "No Changes"
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
