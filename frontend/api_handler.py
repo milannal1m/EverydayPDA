@@ -83,7 +83,7 @@ def put_preference(user_id: int, key: str, new_value):
         put_response = requests.put(url, json=current_data)
 
         if put_response.status_code == 200:
-            return f"Deine Eingabe: {new_value} wurde erfolgreich verarbeitet."
+            return f"Deine Präferenz wurde erfolgreich aktualisiert."
         else:
             return f"Fehler bei der Aktualisierung: {put_response.status_code}"
 

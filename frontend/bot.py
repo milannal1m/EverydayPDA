@@ -43,7 +43,7 @@ async def start(update: Update, context: CallbackContext):
     return KURS
 
 async def kurs(update: Update, context: CallbackContext):
-    return await save_and_ask_next(update, context, "kurs", "Wo ist deine Mensa (z. B. Mensa Zentral)?", MENSA)
+    return await save_and_ask_next(update, context, "kurs", "Wo ist deine Mensa (z. B. Mensa Central)?", MENSA)
 
 async def mensa(update: Update, context: CallbackContext):
     return await save_and_ask_next(update, context, "mensa", "Wo lebst du?", WOHNORT)
