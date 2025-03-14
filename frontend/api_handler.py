@@ -10,7 +10,7 @@ def get_answer(message: str) -> str:
         if response.status_code == 200:
             return(response.json()["answer"])
         else:
-            return(response.status_code + ": " + "Fehler bei der Anfrage an die API.")
+            return f"{response.status_code}: Fehler bei der Anfrage an die API."
     except:
         return "Ich kann mich gerade nicht mit der API verbinden."
     
@@ -30,7 +30,7 @@ def get_preferences(user_id: int) -> tuple:
             f"📰 Nachrichtenquellen: {', '.join(response.json()['news'])}")
             return(summary, "success")
         else:
-            return(response.status_code + ": " + "Fehler bei der Azeige der Präferenzen.", "error")
+            return(f"{response.status_code}: Fehler bei der Anzeige der Präferenzen.", "error")
     except:
         return "Ich kann gerade deine Präferenzen nicht abrufen.", "error"
 
@@ -38,12 +38,12 @@ def post_preferences(user_id: int, preferences: dict) -> str:
     url = "http://api:8000/preferences/init"
     data = {
         "username": str(user_id),
-        "course": preferences["kurs"],
-        "cafeteria": preferences["mensa"],
-        "city": preferences["wohnort"],
-        "preferred_transport_medium": preferences["transport"],
-        "stocks": preferences["aktien"],
-        "news": preferences["news"]
+        "course": preferences.get("kurs", ""),  # Verhindert KeyError
+        "cafeteria": preferences.get("mensa", ""),
+        "city": preferences.get("wohnort", ""),
+        "preferred_transport_medium": preferences.get("transport", ""),
+        "stocks": preferences.get("aktien", []),
+        "news": preferences.get("news", [])
     }
 
     try:
@@ -52,11 +52,10 @@ def post_preferences(user_id: int, preferences: dict) -> str:
         if response.status_code == 200:
             return "Deine Präferenzen wurden erfolgreich gespeichert."
         else:
-            return(response.status_code + ": " + "Fehler bei der Anfrage an die API.")
+            return f"{response.status_code}: Fehler bei der Anfrage an die API."
     except:
         return "Du hast deine Präferenzen anscheinend schon initialisiert."
 
-import requests
 
 def put_preference(user_id: int, key: str, new_value):
     url = f"http://api:8000/preferences/{user_id}"
