@@ -127,37 +127,31 @@ async def mensa_update(update: Update, context: CallbackContext):
 
 async def wohnort_update(update: Update, context: CallbackContext):
     wohnort = update.message.text.strip()
-    #await update.message.reply_text(f"Das ist dein neuer Wohnort: {wohnort}")
     await update.message.reply_text(api_handler.put_preference(update.effective_user.id, "city", wohnort))
     return ConversationHandler.END 
 
 async def transport_update(update: Update, context: CallbackContext):
     transport = update.message.text.strip()
-    #await update.message.reply_text(f"Das ist dein neues Transportmittel: {transport}")
     await update.message.reply_text(api_handler.put_preference(update.effective_user.id, "preferred_transport_medium", transport))
     return ConversationHandler.END 
 
 async def aktien_delete(update: Update, context: CallbackContext):
-    aktien = update.message.text.strip()
-    #await update.message.reply_text(f"Das sind deine gelöschten Aktien: {aktien}")
+    aktien = [aktie.strip() for aktie in update.message.text.split(",")]
     await update.message.reply_text(api_handler.put_preference(update.effective_user.id, "delete_stocks", aktien))
     return ConversationHandler.END
 
 async def aktien_add(update: Update, context: CallbackContext):
     aktien = [aktie.strip() for aktie in update.message.text.split(",")]
-    #await update.message.reply_text(f"Das sind deine hinzugefügten Aktien: {aktien}")
     await update.message.reply_text(api_handler.put_preference(update.effective_user.id, "add_stocks", aktien))
     return ConversationHandler.END
 
 async def news_delete(update: Update, context: CallbackContext):
     news = [news.strip() for news in update.message.text.split(",")]
-    #await update.message.reply_text(f"Das sind deine gelöschten Nachrichtenquellen: {news}")
     await update.message.reply_text(api_handler.put_preference(update.effective_user.id, "delete_news", news))
     return ConversationHandler.END
 
 async def news_add(update: Update, context: CallbackContext): 
-    news = update.message.text.strip()
-    #await update.message.reply_text(f"Das sind deine hinzugefügten Nachrichtenquellen: {news}")
+    news = [news.strip() for news in update.message.text.split(",")]
     await update.message.reply_text(api_handler.put_preference(update.effective_user.id, "add_news", news))
     return ConversationHandler.END
 

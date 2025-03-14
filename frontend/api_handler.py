@@ -1,17 +1,5 @@
 import requests
 
-'''
-user_data = {
-            "username": "existinguser",
-            "course": "Math",
-            "cafeteria": "Main Hall",
-            "city": "Berlin",
-            "preferred_transport_medium": "Car",
-            "stocks": ["Tesla"],
-            "news": ["Reuters"]
-        }
-'''
-
 def get_answer(message: str) -> str:
     url = "http://api:8000/answer"
     params = {"message": message}  # Query-Parameter
@@ -82,8 +70,10 @@ def put_preference(user_id: int, key: str, new_value):
 
         current_data = response.json()
 
+        extra_keys = ["delete_stocks", "add_stocks", "delete_news", "add_news"]
+
         # Überprüfen, ob der Schlüssel existiert
-        if key not in current_data:
+        if key not in current_data and key not in extra_keys:
             return f"Ungültige Präferenz: {key}"
 
         # Nur den gewünschten Key aktualisieren
