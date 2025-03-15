@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 
 class ChatGPTProcessor:
-    _instance = None  # Singleton instance
+    _instance = None 
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
