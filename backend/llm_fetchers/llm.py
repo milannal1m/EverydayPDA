@@ -3,7 +3,17 @@ import os
 from dotenv import load_dotenv
 
 class ChatGPTProcessor:
+    _instance = None  # Singleton instance
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super(ChatGPTProcessor, cls).__new__(cls)
+        return cls._instance
+
     def __init__(self):
+        # Prevent reinitialization of the singleton
+        if hasattr(self, "_initialized") and self._initialized:
+            return
         BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
         env_path = os.path.join(BASE_DIR, ".env")
         load_dotenv(env_path)
@@ -11,6 +21,7 @@ class ChatGPTProcessor:
         if not api_key:
             raise Exception("OpenAI API key not found. Please set in .env file.")
         openai.api_key = api_key
+        self._initialized = True
 
     def process_input(self, user_input: str) -> str:
         try:
@@ -25,7 +36,9 @@ class ChatGPTProcessor:
 
 #Example:
 #if __name__ == "__main__":
-#    processor = ChatGPTProcessor()
+#    processor1 = ChatGPTProcessor()
+#    processor2 = ChatGPTProcessor()
+#    print(processor1 is processor2)   # This should print True to confirm the singleton behavior.
 #    user_input = "Hello, how is the weather today in Stuttgart?"
-#    response = processor.process_input(user_input)
+#    response = processor1.process_input(user_input)
 #    print(response)
