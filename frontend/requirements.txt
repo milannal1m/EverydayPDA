@@ -3,3 +3,6 @@ pytz
 apscheduler
 dotenv
 requests
+pydub
+gTTS
+SpeechRecognition
