@@ -1,11 +1,14 @@
+SpeechRecognition
 apscheduler
 asyncpg
 coverage
 dotenv
 fastapi
+gTTS
 httpx
 openai==0.28.0
 psycopg2
+pydub
 python-telegram-bot
 pytz
 requests
