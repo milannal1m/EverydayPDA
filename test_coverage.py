@@ -56,7 +56,7 @@ def write_coverage_to_readme():
         content.append("\n" + table)
 
     # README aktualisieren
-    with open("README.md", "w") as file:
+    with open("ReadMe.md", "w") as file:
         file.writelines(content)
 
 
