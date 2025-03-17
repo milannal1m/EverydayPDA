@@ -10,14 +10,17 @@
 
 ## Coverage
 
-![Coverage](https://img.shields.io/badge/Coverage-79.3%25-brightgreen)
+![Coverage](https://img.shields.io/badge/Coverage-59.3%25-brightgreen)
 
 | Datei | Coverage (%) |
 |---|---|
 | backend/api/main.py | 96.5% |
 | backend/llm_fetchers/llm.py | 96.2% |
 | backend/service_fetchers/services.py | 36.8% |
-| **Projekt** | **79.3%** |
+| frontend/api_handler.py | 97.9% |
+| frontend/bot.py | 27.6% |
+| frontend/tts_stt.py | 23.5% |
+| **Projekt** | **59.3%** |
 
 ## API
 
