@@ -14,4 +14,3 @@ pytz
 requests
 soundfile
 uvicorn
-ast
