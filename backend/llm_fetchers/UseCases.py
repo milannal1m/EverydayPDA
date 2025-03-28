@@ -1,9 +1,16 @@
+import ast
 from llm import ChatGPTProcessor
 
 class UseCaseProcessor(ChatGPTProcessor):
     def __init__(self):
         super().__init__()
     
+    def parse_response(self, response: str):
+        try:
+            return ast.literal_eval(response)
+        except Exception:
+            return response
+
     def declare_usecase(self, user_input: str) -> str:
         prompt = (
             f"{user_input} "
@@ -11,9 +18,8 @@ class UseCaseProcessor(ChatGPTProcessor):
             "Please select all the APIs mentioned in the input and return a list of numbers corresponding exactly to the order of the APIs listed above."
             "Only give back a list of numbers."
         )
-        return self.process_input(prompt)
-    
-    # Query which information is required using the provided list of use cases
+        raw_response = self.process_input(prompt)
+        return self.parse_response(raw_response)
     
     def get_information(self, user_input: str, information_needed: str) -> str:
         prompt = (
@@ -24,7 +30,8 @@ class UseCaseProcessor(ChatGPTProcessor):
             "Only give back the lists in this format [information_needed: <value>,...] if there is no value just leave it empty. "
             "If there is more than one value for one info return them like this [<value>,<value>]"
         )
-        return self.process_input(prompt)
+        raw_response = self.process_input(prompt)
+        return self.parse_response(raw_response)
     
     # Query using preferences to retrieve the missing information
     # Merge the list of information provided by the prompt and preferences
@@ -36,7 +43,8 @@ class UseCaseProcessor(ChatGPTProcessor):
             f"And here is the prompt by the user: {user_input}. "
             "Please give back the response to the user."
         )
-        return self.process_input(prompt)
+        raw_response = self.process_input(prompt)
+        return self.parse_response(raw_response)
 
 if __name__ == "__main__":
     user_input = "I want to know the weather in Stuttgart and I want to know the BBC and ARD news also tell me about my Stocks."
