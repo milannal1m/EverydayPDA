@@ -54,7 +54,7 @@ class UseCaseProcessor(ChatGPTProcessor):
         return self.process_input(prompt)
 
 if __name__ == "__main__":
-    user_input = "Kannst du mir sagen wie das Wetter in Stuttgart wird?"
+    user_input = "Ich will in den Urlaub."
     information_needed = "Stocks, News Services, City, Cafeteria Name, Course Name, Transport Medium, Destination, Check-in Date, Check-out Date, Departure Date, Return Date"
     
     processor = UseCaseProcessor()

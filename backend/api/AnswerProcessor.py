@@ -21,7 +21,7 @@ class AnswerProcessor:
         if hasattr(self, "_initialized") and self._initialized:
             return
         
-    async def __fetch_from_database(key: str, user_id: str) -> Optional[str]:
+    async def __fetch_from_database(self, key: str, user_id: str) -> Optional[str]:
         """
         Holt fehlende Werte aus der PostgreSQL-Datenbank basierend auf dem Benutzernamen.
         """
@@ -46,7 +46,7 @@ class AnswerProcessor:
             await conn.close()
 
 
-    def __get_default_value(key: str) -> str:
+    def __get_default_value(self,key: str) -> str:
         """
         Standard values for information not provided by the user.
         """
@@ -71,6 +71,7 @@ class AnswerProcessor:
                     data[key] = await self.__fetch_from_database(key, user_id) or 'Unknown'
                     None
                 else:
+                    print(key)
                     data[key] = self.__get_default_value(key)
         return data
     
@@ -79,7 +80,7 @@ class AnswerProcessor:
         use_cases = use_case_processor.declare_usecase(message)
         information_needed = ", ".join([info for use_case in UseCases if use_case.value in use_cases for info in use_case.information_needed])
         information_got = use_case_processor.get_information(message, information_needed)
-        information_got = await self.fill_missing_values(information_got, user_id)
+        information_got = await self.__fill_missing_values(information_got, user_id)
         return use_cases, information_got
     
     def __call_apis(self, use_cases, information_got):

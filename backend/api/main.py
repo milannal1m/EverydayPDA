@@ -6,7 +6,6 @@ import sys
 import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from api.database import get_db_connection
 from api.AnswerProcessor import AnswerProcessor
 from api.models import User, UserUpdate
 from api.preference_endpoints import init_user_preferences, get_user_preferences, update_user_preferences
@@ -24,7 +23,7 @@ app.add_middleware(
 @app.get("/answer")
 async def get_answer(message: str = Query(..., min_length=1), user_id : str = Query(..., min_length=1)):
     answer_processor = AnswerProcessor()
-    return answer_processor.get_answer(message, user_id)
+    return await answer_processor.get_answer(message, user_id)
 
 @app.get("/proactivity")
 def get_proactivity():
@@ -32,7 +31,7 @@ def get_proactivity():
 
 @app.post("/preferences/init")
 async def init_preferences(user: User):
-    return init_user_preferences(user)
+    return await init_user_preferences(user)
 
 @app.get("/preferences/{username}", response_model=User)
 async def get_preferences(username: str) -> Optional[User]:
