@@ -15,11 +15,11 @@
 | Datei | Coverage (%) |
 |---|---|
 | backend/UseCases.py | 100.0% |
-| backend/api/AnswerProcessor.py | 35.3% |
+| backend/api/AnswerProcessor.py | 34.6% |
 | backend/api/database.py | 100.0% |
-| backend/api/main.py | 89.7% |
+| backend/api/main.py | 89.3% |
 | backend/api/models.py | 100.0% |
-| backend/api/preference_endpoints.py | 16.5% |
+| backend/api/preference_endpoints.py | 17.7% |
 | backend/llm_fetchers/ChatGPTProcessor.py | 96.2% |
 | backend/llm_fetchers/UseCaseProcessor.py | 38.2% |
 | backend/service_fetchers/services.py | 36.8% |
