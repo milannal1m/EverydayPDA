@@ -15,7 +15,7 @@
 | Datei | Coverage (%) |
 |---|---|
 | backend/api/main.py | 96.5% |
-| backend/llm_fetchers/llm.py | 96.2% |
+| backend/llm_fetchers/ChatGPTProcessor.py | 96.2% |
 | backend/service_fetchers/services.py | 36.8% |
 | frontend/api_handler.py | 97.9% |
 | frontend/bot.py | 27.6% |
