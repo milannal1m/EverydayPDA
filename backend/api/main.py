@@ -7,7 +7,7 @@ import sys
 import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from llm_fetchers.llm import ChatGPTProcessor
+from backend.llm_fetchers.ChatGPTProcessor import ChatGPTProcessor
 import service_fetchers.services as services
 
 

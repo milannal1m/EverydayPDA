@@ -1,5 +1,5 @@
 import ast
-from llm import ChatGPTProcessor
+from ChatGPTProcessor import ChatGPTProcessor
 
 class UseCaseProcessor(ChatGPTProcessor):
     def __init__(self):
@@ -27,8 +27,8 @@ class UseCaseProcessor(ChatGPTProcessor):
             "Is any information not provided by the user? "
             "Give back a list of information provided by the user. "
             f"Base the list on the information needed: {information_needed} "
-            "Only give back the lists in this format [information_needed: <value>,...] if there is no value just leave it empty. "
-            "If there is more than one value for one info return them like this [<value>,<value>]"
+            "Only give back the lists in this format {'information_needed': '<value>',...} if there is no value just leave it empty. "
+            "If there is more than one value for one info return them like this ['<value>','<value>']"
         )
         raw_response = self.process_input(prompt)
         return self.parse_response(raw_response)
@@ -54,5 +54,5 @@ if __name__ == "__main__":
     use_case = processor.declare_usecase(user_input)
     information_got = processor.get_information(user_input, information_needed)
     
-    print(use_case)
-    print(information_got)
+    print(use_case) # This is a list of numbers
+    print(information_got) # This is a dictionary with the information provided by the user
