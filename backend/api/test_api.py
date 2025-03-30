@@ -7,7 +7,7 @@ class TestGetPreferences(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.client = TestClient(app)  
 
-    @patch("database.get_db_connection")
+    @patch("api.preference_endpoints.get_db_connection")
     async def test_get_preferences(self, mock_get_db_connection):
         
         mock_conn = AsyncMock()
@@ -35,7 +35,7 @@ class TestGetPreferences(unittest.IsolatedAsyncioTestCase):
             "news": ["CNN", "BBC"]
         })
 
-    @patch("database.get_db_connection")
+    @patch("api.preference_endpoints.get_db_connection")
     async def test_get_preferences_user_not_found(self, mock_get_db_connection):
         mock_conn = AsyncMock()
         mock_get_db_connection.return_value = mock_conn
@@ -61,7 +61,7 @@ class TestInitPreferences(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.client = TestClient(app)
 
-    @patch("database.get_db_connection", new_callable=AsyncMock)
+    @patch("api.preference_endpoints.get_db_connection", new_callable=AsyncMock)
     async def test_init_preferences_success(self, mock_get_db_connection):
         mock_conn = AsyncMock()
         # Hier ersetzen wir die transaction-Methode durch eine normale Funktion, 
@@ -94,7 +94,7 @@ class TestInitPreferences(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.json(), {"message": "User created successfully", "user_id": 100})
         mock_conn.fetchval.assert_any_call("SELECT COUNT(*) FROM users WHERE username = $1", "testuser")
 
-    @patch("database.get_db_connection", new_callable=AsyncMock)
+    @patch("api.preference_endpoints.get_db_connection", new_callable=AsyncMock)
     async def test_init_preferences_user_already_exists(self, mock_get_db_connection):
         mock_conn = AsyncMock()
         mock_conn.transaction = lambda: DummyTransaction(mock_conn)
@@ -117,7 +117,7 @@ class TestInitPreferences(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(), {"detail": "User already exists"})
         
-    @patch("database.get_db_connection", new_callable=AsyncMock)
+    @patch("api.preference_endpoints.get_db_connection", new_callable=AsyncMock)
     async def test_init_preferences_with_existing_stocks_and_news(self, mock_get_db_connection):
         mock_conn = AsyncMock()
         # Ersetze die transaction-Methode mit einer Lambda, die den Dummy-Transaktions-Kontextmanager zurückgibt
@@ -157,7 +157,7 @@ class TestUpdatePreferences(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.client = TestClient(app)
 
-    @patch("database.get_db_connection", new_callable=AsyncMock)
+    @patch("api.preference_endpoints.get_db_connection", new_callable=AsyncMock)
     async def test_update_preferences_success(self, mock_get_db_connection):
         mock_conn = AsyncMock()
         # Ersetze die transaction-Methode, damit der "async with"-Block korrekt funktioniert.
@@ -195,7 +195,7 @@ class TestUpdatePreferences(unittest.IsolatedAsyncioTestCase):
         mock_conn.fetchval.assert_called()
         mock_conn.close.assert_called()
 
-    @patch("database.get_db_connection", new_callable=AsyncMock)
+    @patch("api.preference_endpoints.get_db_connection", new_callable=AsyncMock)
     async def test_update_preferences_user_not_found(self, mock_get_db_connection):
         mock_conn = AsyncMock()
         mock_conn.transaction = lambda: DummyTransaction(mock_conn)
