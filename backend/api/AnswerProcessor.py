@@ -71,7 +71,6 @@ class AnswerProcessor:
                     data[key] = await self.__fetch_from_database(key, user_id) or 'Unknown'
                     None
                 else:
-                    print(key)
                     data[key] = self.__get_default_value(key)
         return data
     
@@ -92,7 +91,17 @@ class AnswerProcessor:
         #api_data = self.__call_apis(use_cases, information_got)
         #response = use_case_processor.response(message, api_data)
         #return {"response": response}
-        return {"use_cases": use_cases, "information_needed": information_got}
+        return {"use_cases": use_cases, "information": information_got}
+    
+    async def get_morning(self,user_id):
+        use_case_processor = UseCaseProcessor()
+        use_cases = [UseCases.STOCKS.value, UseCases.NEWS.value, UseCases.WEATHER.value]
+        info_dict = {info: "" for use_case in UseCases if use_case.value in use_cases for info in use_case.information_needed}
+        information_got = await self.__fill_missing_values(info_dict, user_id)
+        #response = use_case_processor.response(, api_data)
+        #return {"response": response}
+        return {"use_cases": use_cases, "information": information_got}
+
 
         
     

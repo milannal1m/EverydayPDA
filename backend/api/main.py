@@ -25,6 +25,11 @@ async def get_answer(message: str = Query(..., min_length=1), user_id : str = Qu
     answer_processor = AnswerProcessor()
     return await answer_processor.get_answer(message, user_id)
 
+@app.get("/morning")
+async def get_morning(user_id : str = Query(..., min_length=1)):
+    answer_processor = AnswerProcessor()
+    return await answer_processor.get_morning(user_id)
+
 @app.get("/proactivity")
 def get_proactivity():
     return {"proactivity": "proactivity"}
