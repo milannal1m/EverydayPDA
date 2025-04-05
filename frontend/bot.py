@@ -200,9 +200,9 @@ async def answer(update: Update, context: CallbackContext):
         
         input_text = tts_stt.convert_voice_to_text(voice_path) # Konvertieren der Sprachnachricht in Text
 
-        text = api_handler.get_answer(input_text) # Antwort auf die Sprachnachricht abrufen
+        text = api_handler.get_answer(input_text, update.effective_user.id) # Antwort auf die Sprachnachricht abrufen
     else: # Textnachricht
-        text = api_handler.get_answer(update.message.text) 
+        text = api_handler.get_answer(update.message.text, update.effective_user.id) 
 
     voice_output_path = tts_stt.generate_voice_message(text) # Text in Sprachnachricht umwandeln
 
