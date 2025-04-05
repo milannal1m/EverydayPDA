@@ -8,29 +8,62 @@ load_dotenv(env_path)
 
 AMADEUS_CLIENT_ID = os.getenv("AMADEUS_CLIENT_ID")
 AMADEUS_CLIENT_SECRET = os.getenv("AMADEUS_CLIENT_SECRET")
-TWElVE_DATA_API_KEY = os.getenv("TWElVE_DATA_API_KEY ")
+TWELVE_DATA_API_KEY = os.getenv("TWELVE_DATA_API_KEY")
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
 OPENROUTE_API_KEY = os.getenv("OPENROUTE_API_KEY")
 AVIATION_STACK_API_KEY = os.getenv("AVIATION_STACK_API_KEY")
 
 # 1. Aktien (Twelve Data)
-def get_stock_price(symbol="AAPL"):
-    url = f"https://api.twelvedata.com/time_series?symbol={symbol}&interval=1min&apikey={TWElVE_DATA_API_KEY}"
-    response = requests.get(url)
-    return response.json()
+def get_stock_price(symbols = ["AAPL", "MSFT"]):
+    stocks = {}
+
+    for symbol in symbols:
+        url = f"https://api.twelvedata.com/time_series?symbol={symbol}&interval=1min&apikey={TWELVE_DATA_API_KEY}"
+        response = requests.get(url)
+        stock = response.json()
+        # Filters out the stocks symbol, price and datetime
+        stocks[symbol] = {
+            "price": stock.get("values", [{}])[0].get("close"),
+            "datetime": stock.get("values", [{}])[0].get("datetime")
+        }
+
+    return stocks
 
 # 2. Nachrichten (NewsAPI)
-def get_news():
-    url = f"https://newsapi.org/v2/top-headlines?country=us&pageSize=5&apiKey={NEWS_API_KEY}"
-    response = requests.get(url)
-    return response.json()
+def get_news(categories = ["general", "health"]):
+    news = {}
+
+    for category in categories:
+        url = f"https://newsapi.org/v2/top-headlines?category={category}&pageSize=2&apiKey={NEWS_API_KEY}"
+        response = requests.get(url)
+        articles = response.json().get("articles", [])
+        # Adds the category to the news dictionary
+        if category not in news:
+            news[category] = []
+        # Filters out the articles title and url
+        for article in articles:
+            news[category].append({ 
+                "title": article.get("title"),
+                "source": article.get("url")
+            })
+
+    return news
 
 # 3. Wetter (WeatherAPI)
-def get_weather(city="Berlin"):
-    url = f"http://api.weatherapi.com/v1/current.json?key={WEATHER_API_KEY}&q={city}"
-    response = requests.get(url)
-    return response.json()
+def get_weather(cities = ["Berlin", "New York", "London"]):
+    weatherCities = {}
+
+    for city in cities:
+        url = f"http://api.weatherapi.com/v1/current.json?key={WEATHER_API_KEY}&q={city}"
+        response = requests.get(url)
+        condition = response.json()
+        # Filters out the locations name, temperature and feelsliek temperature
+        weatherCities[city] = {
+                "temperature": condition.get("current", {}).get("temp_c"),
+                "feelslike": condition.get("current", {}).get("feelslike_c")
+            }        
+    return weatherCities
 
 # 4. Wegezeitberechnung (OpenRouteService)
 def get_route_time(start=[8.6821, 50.1109], end=[8.6298, 50.1095]):  # Koordinaten (Lon, Lat)
@@ -72,9 +105,9 @@ def get_flight_status(flight_number="LH201"):
 
 # --- Testaufrufe ---
 if __name__ == "__main__":
-    print("📈 Aktienkurs:", get_stock_price("AAPL"))
+    print("📈 Aktienkurs:", get_stock_price())
     print("📰 Nachrichten:", get_news())
-    print("🌤️ Wetter:", get_weather("Berlin"))
+    print("🌤️ Wetter:", get_weather())
     print("🚗 Routenzeit:", get_route_time())
     print("🏨 Hotels:", get_hotels("STR"))
     print("✈️ Flugstatus:", get_flight_status("LH201"))
