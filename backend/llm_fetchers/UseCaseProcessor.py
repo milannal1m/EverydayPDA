@@ -63,7 +63,7 @@ class UseCaseProcessor(ChatGPTProcessor):
 
 if __name__ == "__main__":
     user_input = "Wie lange habe ich heute Uni und wie steht es heute um den Kurs von Microsoft?"
-    information_needed = "Stocks, News Services, dsfjkadsf, Cafeteria Name, Course Name, Transport Medium, Destination, Check-in Date, Check-out Date, Departure Date, Return Date"
+    information_needed = "Stocks, News Services, City, Cafeteria Name, Course Name, Transport Medium, Destination, Check-in Date, Check-out Date, Departure Date, Return Date"
 
     processor = UseCaseProcessor()
     use_case = processor.declare_usecase(user_input)
