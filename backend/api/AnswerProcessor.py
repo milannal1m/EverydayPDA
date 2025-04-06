@@ -7,6 +7,7 @@ from llm_fetchers.UseCaseProcessor import UseCaseProcessor
 import service_fetchers.services as services
 from UseCases import UseCases
 from api.database import get_db_connection
+from service_fetchers.services import get_stock_price, get_news, get_weather
 
 class AnswerProcessor:
     _instance = None 
@@ -83,25 +84,37 @@ class AnswerProcessor:
         return use_cases, information_got
     
     def __call_apis(self, use_cases, information_got):
-        None
+        results = {}
+
+        for use_case_id in use_cases:
+            try:
+                use_case = UseCases(use_case_id)
+            except ValueError:
+                raise ValueError(f"Invalid Use Case Identifier: {use_case_id}")
+
+            missing_keys = [key for key in use_case.information_needed if key not in information_got]
+            if missing_keys:
+                raise KeyError(f"Missing keys {missing_keys} for Use Case: {use_case.name}")       
+
+            args = [information_got[key] for key in use_case.information_needed]
+            result = use_case.func(*args)
+            results[use_case.description] = result
+
+        return results
 
     async def get_answer(self,message,user_id):
         use_case_processor = UseCaseProcessor()
         use_cases, information_got = await self.__get_use_cases_and_info(message,user_id)
-        #api_data = self.__call_apis(use_cases, information_got)
-        #response = use_case_processor.response(message, api_data)
-        #return {"response": response}
-        return {"use_cases": use_cases, "information": information_got}
+        api_data = self.__call_apis(use_cases, information_got)
+        response = use_case_processor.response(message, api_data)
+        return {"response": response}
     
     async def get_morning(self,user_id):
         use_case_processor = UseCaseProcessor()
         use_cases = [UseCases.STOCKS.value, UseCases.NEWS.value, UseCases.WEATHER.value]
         info_dict = {info: "" for use_case in UseCases if use_case.value in use_cases for info in use_case.information_needed}
         information_got = await self.__fill_missing_values(info_dict, user_id)
-        #response = use_case_processor.response(, api_data)
-        #return {"response": response}
-        return {"use_cases": use_cases, "information": information_got}
-
-
-        
-    
+        api_data = self.__call_apis(use_cases, information_got)
+        message = "Fass mir die wichtigsten Informationen für meinen Morgen zusammen."
+        response = use_case_processor.response(message, api_data)
+        return {"response": response}
