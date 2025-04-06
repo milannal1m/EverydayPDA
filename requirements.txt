@@ -7,7 +7,7 @@ fastapi
 ffmpeg-python
 gTTS
 httpx
-openai
+openai==0.28.0
 psycopg2
 python-telegram-bot
 pytz
