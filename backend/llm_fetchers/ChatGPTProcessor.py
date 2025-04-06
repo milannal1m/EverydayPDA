@@ -1,6 +1,9 @@
 import openai
 import os
 from dotenv import load_dotenv
+from pydantic import BaseModel
+from typing import Type
+from openai import OpenAI
 
 class ChatGPTProcessor:
     _instance = None 
@@ -24,15 +27,41 @@ class ChatGPTProcessor:
         self._initialized = True
 
     def process_input(self, user_input: str) -> str:
+        client = OpenAI() 
         try:
-            response = openai.ChatCompletion.create(
+            response = client.beta.chat.completions.parse(
                 model="gpt-4o-mini",
                 messages=[{"role": "user", "content": user_input}],
                 max_tokens=400
             )
-            return response["choices"][0]["message"]["content"]
+            return response.choices[0].message.content
         except Exception as e:
             raise Exception("Error processing input: " + str(e))
+
+    def process_input_with_context(self, user_input: str, context: str, schema: Type[BaseModel]) -> BaseModel:
+        client = OpenAI() 
+        try:
+            response = client.beta.chat.completions.parse(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": context},
+                    {"role": "user", "content": user_input}
+                ],
+                response_format={
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": schema.__name__,
+                        "schema": schema.model_json_schema()
+                    }
+                }
+            )
+            parsed_response = response.choices[0].message.parsed
+            if not parsed_response:
+                # Fallback: manually parse the output using the schema
+                parsed_response = schema.model_validate_json(response.choices[0].message.content)
+            return parsed_response
+        except Exception as e:
+            raise Exception("Error processing structured input: " + str(e))
 
 #Example:
 #if __name__ == "__main__":
