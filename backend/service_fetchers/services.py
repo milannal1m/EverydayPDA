@@ -15,13 +15,14 @@ OPENROUTE_API_KEY = os.getenv("OPENROUTE_API_KEY")
 AVIATION_STACK_API_KEY = os.getenv("AVIATION_STACK_API_KEY")
 
 # 1. Aktien (Twelve Data)
-def get_stock_price(symbols = ["AAPL", "MSFT"]):
+def get_stock_price(symbols):
     stocks = {}
 
     for symbol in symbols:
         url = f"https://api.twelvedata.com/time_series?symbol={symbol}&interval=1min&apikey={TWELVE_DATA_API_KEY}"
         response = requests.get(url)
         stock = response.json()
+
         # Filters out the stocks symbol, price and datetime
         stocks[symbol] = {
             "price": stock.get("values", [{}])[0].get("close"),
@@ -31,16 +32,18 @@ def get_stock_price(symbols = ["AAPL", "MSFT"]):
     return stocks
 
 # 2. Nachrichten (NewsAPI)
-def get_news(categories = ["general", "health"]):
+def get_news(categories):
     news = {}
 
     for category in categories:
         url = f"https://newsapi.org/v2/top-headlines?category={category}&pageSize=2&apiKey={NEWS_API_KEY}"
         response = requests.get(url)
         articles = response.json().get("articles", [])
+
         # Adds the category to the news dictionary
         if category not in news:
             news[category] = []
+
         # Filters out the articles title and url
         for article in articles:
             news[category].append({ 
@@ -51,22 +54,26 @@ def get_news(categories = ["general", "health"]):
     return news
 
 # 3. Wetter (WeatherAPI)
-def get_weather(cities = ["Berlin", "New York", "London"]):
+def get_weather(cities):
     weatherCities = {}
 
     for city in cities:
-        url = f"http://api.weatherapi.com/v1/current.json?key={WEATHER_API_KEY}&q={city}"
+        url = f"http://api.weatherapi.com/v1/current.json&/forecast.json ?key={WEATHER_API_KEY}&q={city}"
         response = requests.get(url)
         condition = response.json()
+
         # Filters out the locations name, temperature and feelsliek temperature
         weatherCities[city] = {
                 "temperature": condition.get("current", {}).get("temp_c"),
-                "feelslike": condition.get("current", {}).get("feelslike_c")
-            }        
+                "feelslike": condition.get("current", {}).get("feelslike_c"),
+                "max_temp": condition.get("forecast", {}).get("forecastday", [{}])[0].get("day", {}).get("maxtemp_c"),
+                "min_temp": condition.get("forecast", {}).get("forecastday", [{}])[0].get("day", {}).get("mintemp_c"),
+            } 
+               
     return weatherCities
 
 # 4. Wegezeitberechnung (OpenRouteService)
-def get_route_time(start=[8.6821, 50.1109], end=[8.6298, 50.1095]):  # Koordinaten (Lon, Lat)
+def get_route_time(start):
     url = "https://api.openrouteservice.org/v2/directions/driving-car"
     headers = {"Authorization": OPENROUTE_API_KEY, "Content-Type": "application/json"}
     params = {"start": f"{start[0]},{start[1]}", "end": f"{end[0]},{end[1]}"}
@@ -105,9 +112,9 @@ def get_flight_status(flight_number="LH201"):
 
 # --- Testaufrufe ---
 if __name__ == "__main__":
-    print("📈 Aktienkurs:", get_stock_price())
-    print("📰 Nachrichten:", get_news())
-    print("🌤️ Wetter:", get_weather())
+    print("📈 Aktienkurs:", get_stock_price(["AAPL", "MSFT"]))
+    print("📰 Nachrichten:", get_news(["general", "health"]))
+    print("🌤️ Wetter:", get_weather(["Berlin", "New York", "London"]))
     print("🚗 Routenzeit:", get_route_time())
     print("🏨 Hotels:", get_hotels("STR"))
     print("✈️ Flugstatus:", get_flight_status("LH201"))
