@@ -80,7 +80,7 @@ def get_route_time(start):
     response = requests.get(url, headers=headers, params=params)
     return response.json()
 
-# 5. Amadeus: Access Token abrufen
+# 5a. Amadeus: Access Token abrufen
 def get_amadeus_token():
     url = "https://test.api.amadeus.com/v1/security/oauth2/token"
     payload = {
@@ -93,28 +93,45 @@ def get_amadeus_token():
     token_data = response.json()
     return token_data.get("access_token")
 
-# 6. Hotelsuche (Amadeus)
-def get_hotels(city_code="STR"):
+# 5b. Stadtcode (Amadeus)
+def get_city_code(city_name):
     token = get_amadeus_token()
     if not token:
         return {"error": "Fehler beim Abrufen des Tokens"}
     
-    url = f"https://test.api.amadeus.com/v1/reference-data/locations/hotels/by-city?cityCode={city_code}"
+    url = f"https://test.api.amadeus.com/v1/reference-data/locations/cities?keyword={city_name}&max=10"
     headers = {"Authorization": f"Bearer {token}"}
     response = requests.get(url, headers=headers)
-    return response.json()
+    return response.json().get("data", [{}])[0].get("iataCode")
+
+
+# 6. Hotelsuche (Amadeus)
+def get_hotels(city_names):
+    token = get_amadeus_token()
+    if not token:
+        return {"error": "Fehler beim Abrufen des Tokens"}
+    
+    hotels = {}
+
+    for city_name in city_names:
+        city_code = get_city_code(city_names)
+        url = f"https://test.api.amadeus.com/v1/reference-data/locations/hotels/by-city?cityCode={city_code}&radius=1&ratings=4&radiusUnit=KM&hotelSource=ALL"
+        headers = {"Authorization": f"Bearer {token}"}
+        hotel = requests.get(url, headers=headers)
+    
+    return hotels
 
 # 7. Fluginformationen (AviationStack)
-def get_flight_status(flight_number="LH201"):
-    url = f"http://api.aviationstack.com/v1/flights?access_key={AVIATION_STACK_API_KEY}&flight_iata={flight_number}"
+def get_flight_status(destination):
+    url = f"http://api.aviationstack.com/v1/flights?access_key={AVIATION_STACK_API_KEY}&arr_iata=STR"
     response = requests.get(url)
     return response.json()
 
 # --- Testaufrufe ---
 if __name__ == "__main__":
-    print("📈 Aktienkurs:", get_stock_price(["AAL", "GOOGL"]))
-    print("📰 Nachrichten:", get_news())
-    print("🌤️ Wetter:", get_weather())
+    #print("📈 Aktienkurs:", get_stock_price())
+    #print("📰 Nachrichten:", get_news())
+    #print("🌤️ Wetter:", get_weather())
     #print("🚗 Routenzeit:", get_route_time())
-    #print("🏨 Hotels:", get_hotels("STR"))
-    #print("✈️ Flugstatus:", get_flight_status("LH201"))
+    #print("🏨 Hotels:", get_hotels())
+    #print("✈️ Flugstatus:", get_flight_status())
