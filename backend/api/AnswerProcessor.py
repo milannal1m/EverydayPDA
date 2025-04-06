@@ -67,10 +67,9 @@ class AnswerProcessor:
         Fill in missing values for required information.
         """
         for key in data.keys():
-            if data[key] == "":
+            if data[key] == [""] or data[key] == "":
                 if key in ['Stocks', 'News Services', 'City', 'Cafeteria Name', 'Course Name', 'Transport Medium']:
                     data[key] = await self.__fetch_from_database(key, user_id) or 'Unknown'
-                    None
                 else:
                     data[key] = self.__get_default_value(key)
         return data
@@ -115,6 +114,7 @@ class AnswerProcessor:
         info_dict = {info: "" for use_case in UseCases if use_case.value in use_cases for info in use_case.information_needed}
         information_got = await self.__fill_missing_values(info_dict, user_id)
         api_data = self.__call_apis(use_cases, information_got)
-        message = "Fass mir die wichtigsten Informationen für meinen Morgen zusammen."
+        print(api_data, information_got)
+        message = "Fass mir die wichtigsten Informationen für meinen Morgen zusammen. Geb mir das als einen zusammnhängenden Text zurück. Ohne Fomratierungen. Sag am Anfang Guten Morgen!"
         response = use_case_processor.response(message, api_data)
         return {"response": response}

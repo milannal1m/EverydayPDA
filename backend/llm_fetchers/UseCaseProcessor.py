@@ -34,7 +34,7 @@ class UseCaseProcessor(ChatGPTProcessor):
             "Is any information not provided by the user? "
             "Give back a list of information provided by the user. "
             f"Base the list on the information needed: {information_needed} "
-            "Only give back the lists in this format {'information_needed': '<value>',...} if there is no value just leave it empty."
+            "Only give back the lists in this format {'<information_needed>': ['<value>'],...} if there is no value just give back ['']"
             "If there is more than one value for one info return them like this ['<value>','<value>']"
             "Give back nothing else. It is important that you leave out all other information and leave the value of an information_needed empty if none is provided."
         )
