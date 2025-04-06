@@ -112,7 +112,7 @@ def get_flight_status(flight_number="LH201"):
 
 # --- Testaufrufe ---
 if __name__ == "__main__":
-    print("📈 Aktienkurs:", get_stock_price())
+    print("📈 Aktienkurs:", get_stock_price(["AAL", "GOOGL"]))
     print("📰 Nachrichten:", get_news())
     print("🌤️ Wetter:", get_weather())
     #print("🚗 Routenzeit:", get_route_time())
