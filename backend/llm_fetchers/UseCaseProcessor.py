@@ -3,43 +3,51 @@ import sys
 import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from UseCases import UseCases
 from llm_fetchers.ChatGPTProcessor import ChatGPTProcessor
+
+from pydantic import BaseModel
+from typing import List, Dict
+
+class UseCaseSelection(BaseModel):
+    use_case_ids: List[int]
+
+class ExtractedInformation(BaseModel):
+    info: Dict[str, List[str]]
 
 class UseCaseProcessor(ChatGPTProcessor):
     def __init__(self):
         super().__init__()
-    
+
     def parse_response(self, response: str):
         try:
             return ast.literal_eval(response)
         except Exception:
             return response
-
-    def declare_usecase(self, user_input: str) -> list:
-        use_cases = ", ".join(use_case.description for use_case in UseCases)
-        prompt = (
-            f"This is the user input: {user_input} "
-            "If the User input isnt Englisch, please internally translate it to Englisch and then process it. "
-            f"You have the following Use Case APIs: {use_cases}."
-            "Please select all the APIs mentioned in the input and return a list of numbers corresponding exactly to the order of the APIs listed above."
-            "Only give back a list of numbers."
-        )
-        raw_response = self.process_input(prompt)
-        return self.parse_response(raw_response)
     
-    def get_information(self, user_input: str, information_needed: str) -> dict:
-        prompt = (
-            f"Here is the information needed: {information_needed} and here is the prompt by the user: {user_input}. "
-            "Is any information not provided by the user? "
-            "Give back a list of information provided by the user. "
-            f"Base the list on the information needed: {information_needed} "
-            "Only give back the lists in this format {'information_needed': '<value>',...} if there is no value just leave it empty."
-            "If there is more than one value for one info return them like this ['<value>','<value>']"
-            "Give back nothing else. It is important that you leave out all other information and leave the value of an information_needed empty if none is provided."
+    def declare_usecase(self, user_input: str) -> List[int]:
+        use_cases = ", ".join(f"{use_case.value}: {use_case.description}" for use_case in UseCases)
+        context = (
+            f"You are given this user input: {user_input} "
+            "If the input isn't in English, internally translate it. "
+            f"Available APIs with their IDs are listed here: {use_cases}. "
+            "Return a list of numbers corresponding to the APIs mentioned in the user input."
         )
-        raw_response = self.process_input(prompt)
-        return self.parse_response(raw_response)
+        structured = self.process_input_with_context(user_input, context, UseCaseSelection)
+        valid_ids = [uc.value for uc in UseCases]
+        selected_ids = self.parse_response(structured.use_case_ids)
+        return [uid for uid in selected_ids if uid in valid_ids]
+
+    def get_information(self, user_input: str, information_needed: str) -> dict:
+        context = (
+            f"These are the required fields: {information_needed}. "
+            f"Here's the user input: {user_input}. "
+            "Return a dictionary where each key is one of the fields, and the value is a list of strings provided in the input. "
+            "If the value isn't provided, use ['']. Only return the dictionary."
+        )
+        structured = self.process_input_with_context(user_input, context, ExtractedInformation)
+        return self.parse_response(structured.info)
     
     # Query using preferences to retrieve the missing information
     # Merge the list of information provided by the prompt and preferences
@@ -54,12 +62,12 @@ class UseCaseProcessor(ChatGPTProcessor):
         return self.process_input(prompt)
 
 if __name__ == "__main__":
-    user_input = "Ich will in den Urlaub."
+    user_input = "Wie lange habe ich heute Uni und wie steht es heute um den Kurs von Microsoft?"
     information_needed = "Stocks, News Services, City, Cafeteria Name, Course Name, Transport Medium, Destination, Check-in Date, Check-out Date, Departure Date, Return Date"
-    
+
     processor = UseCaseProcessor()
     use_case = processor.declare_usecase(user_input)
-    information_got = processor.get_information(user_input, information_needed)
-    
-    print(use_case) # This is a list of numbers
-    print(information_got) # This is a dictionary with the information provided by the user
+    info = processor.get_information(user_input, information_needed)
+
+    print(use_case)  # e.g., [1, 5]
+    print(info)      # e.g., {'Stocks': [''], 'News Services': [''], 'City': [''], 'Cafeteria Name': [''], 'Course Name': [''], 'Transport Medium': [''], 'Destination': [''], 'Check-in Date': [''], 'Check-out Date': [''], 'Departure Date': [''], 'Return Date': ['']}

@@ -129,9 +129,15 @@ def get_flight_status(destination):
 
 # --- Testaufrufe ---
 if __name__ == "__main__":
+<<<<<<< HEAD
     #print("📈 Aktienkurs:", get_stock_price())
     #print("📰 Nachrichten:", get_news())
     #print("🌤️ Wetter:", get_weather())
+=======
+    print("📈 Aktienkurs:", get_stock_price(["AAL", "GOOGL"]))
+    print("📰 Nachrichten:", get_news(["health"]))
+    print("🌤️ Wetter:", get_weather(["Stuttgart"]))
+>>>>>>> 1ce5591e33ec4f2818a6de0112169fe5920d6c70
     #print("🚗 Routenzeit:", get_route_time())
     #print("🏨 Hotels:", get_hotels())
     #print("✈️ Flugstatus:", get_flight_status())
