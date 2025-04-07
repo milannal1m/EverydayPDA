@@ -9,12 +9,25 @@ def get_answer(message: str, user_id: int) -> str:
         response = requests.get(url, params=params)
 
         if response.status_code == 200:
-            return(response.json()["information_needed"])
+            return(response.json()["response"])
         else:
             return f"{response.status_code}: Fehler bei der Anfrage an die API."
     except:
         return "Ich kann mich gerade nicht mit der API verbinden."
     
+def get_morning_message(user_id: int) -> str:
+    url = "http://api:8000/morning" + "?user_id=" + str(user_id) # Query-Parameter
+
+    try:
+        response = requests.get(url)
+
+        if response.status_code == 200:
+            return(response.json()["response"])
+        else:
+            return f"{response.status_code}: Fehler bei der Anfrage an die API."
+    except:
+        return "Ich kann mich gerade nicht mit der API verbinden."
+
 def get_preferences(user_id: int) -> tuple:
     url = "http://api:8000/preferences/" + str(user_id)
 
@@ -56,7 +69,6 @@ def post_preferences(user_id: int, preferences: dict) -> str:
             return f"{response.status_code}: Fehler bei der Anfrage an die API."
     except:
         return "Du hast deine Präferenzen anscheinend schon initialisiert."
-
 
 def put_preference(user_id: int, key: str, new_value):
     url = f"http://api:8000/preferences/{user_id}"

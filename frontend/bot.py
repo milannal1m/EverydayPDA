@@ -208,12 +208,19 @@ async def answer(update: Update, context: CallbackContext):
 
     await update.message.reply_text(text) # Antwort senden
     await update.message.reply_voice(voice=open(voice_output_path, "rb")) # Sprachnachricht senden
-       
+
+async def morning_message(update: Update, context: CallbackContext):
+    text = api_handler.get_morning_message(update.effective_user.id) 
+
+    voice_output_path = tts_stt.generate_voice_message(text) # Text in Sprachnachricht umwandeln
+
+    await update.message.reply_text(text) # Antwort senden
+    await update.message.reply_voice(voice=open(voice_output_path, "rb")) # Sprachnachricht senden
 
 def main():
     application = Application.builder().token(TELEGRAM_API_KEY).build()
 
-    conv_handler = ConversationHandler(
+    init_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
             KURS: [MessageHandler(filters.TEXT & ~filters.COMMAND, kurs)],
@@ -242,10 +249,11 @@ def main():
         fallbacks=[],
     )
 
-    application.add_handler(conv_handler)
+    application.add_handler(init_handler)
     application.add_handler(update_handler)
     application.add_handler(MessageHandler((filters.TEXT & ~filters.COMMAND) | filters.VOICE, answer))
     application.add_handler(CommandHandler("showpref", show_preferences))
+    application.add_handler(CommandHandler("morning", morning_message))
 
 
     application.run_polling()
