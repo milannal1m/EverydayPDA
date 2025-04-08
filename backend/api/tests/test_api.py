@@ -1,6 +1,11 @@
 import unittest
 from unittest.mock import AsyncMock, patch
 from fastapi.testclient import TestClient
+import os
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from AnswerProcessor import AnswerProcessor
 from main import app, User
 
 class TestGetPreferences(unittest.IsolatedAsyncioTestCase):
