@@ -31,8 +31,9 @@ async def get_morning():
     return await answer_processor.get_morning()
 
 @app.get("/proactivity")
-def get_proactivity():
-    return {"proactivity": "proactivity"}
+async def get_proactivity():
+    answer_processor = AnswerProcessor()
+    return await answer_processor.get_proactivity()
 
 @app.post("/preferences/init")
 async def init_preferences(user: User):

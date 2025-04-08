@@ -100,7 +100,37 @@ class AnswerProcessor:
             results[use_case.description] = result
 
         return results
+    
+    async def __get_all_users(self):
+        conn = await get_db_connection()
+        try:
+            user_ids = await conn.fetch("SELECT username FROM users")
+            return user_ids
+        finally:
+            await conn.close()
 
+    async def __get_api_data_without_gpt(self, use_cases, user_id):
+        info_dict = {info: "" for use_case in UseCases if use_case.value in use_cases for info in use_case.information_needed}
+        information_got = await self.__fill_missing_values(info_dict, user_id)
+        api_data = self.__call_apis(use_cases, information_got)
+        return api_data
+    
+    async def __get_user_morning(self,user_id):
+        use_case_processor = UseCaseProcessor()
+        use_cases = [UseCases.STOCKS.value, UseCases.NEWS.value, UseCases.WEATHER.value]
+        api_data = await self.__get_api_data_without_gpt(use_cases, user_id)
+        message = "Fass mir die wichtigsten Informationen für meinen Morgen zusammen. Geb mir das als einen zusammnhängenden Text zurück. Ohne Fomratierungen. Sag am Anfang Guten Morgen!"
+        response = use_case_processor.response(message, api_data)
+        return {"response": response}
+    
+    async def __get_user_proactivity(self,user_id):
+        use_case_processor = UseCaseProcessor()
+        use_cases = [UseCases.STOCKS.value, UseCases.NEWS.value]
+        api_data = await self.__get_api_data_without_gpt(use_cases, user_id)
+        message = "Stell dir vor du kommst proaktiv auf mich zu und erzählst mir etwas Neues über meine Aktien oder News. Beginne mit Hey"
+        response = use_case_processor.response(message, api_data)
+        return {"response": response}
+    
     async def get_answer(self,message,user_id):
         use_case_processor = UseCaseProcessor()
         use_cases, information_got = await self.__get_use_cases_and_info(message,user_id)
@@ -108,22 +138,8 @@ class AnswerProcessor:
         response = use_case_processor.response(message, api_data)
         return {"response": response}
     
-    async def __get_user_morning(self,user_id):
-        use_case_processor = UseCaseProcessor()
-        use_cases = [UseCases.STOCKS.value, UseCases.NEWS.value, UseCases.WEATHER.value]
-        info_dict = {info: "" for use_case in UseCases if use_case.value in use_cases for info in use_case.information_needed}
-        information_got = await self.__fill_missing_values(info_dict, user_id)
-        api_data = self.__call_apis(use_cases, information_got)
-        message = "Fass mir die wichtigsten Informationen für meinen Morgen zusammen. Geb mir das als einen zusammnhängenden Text zurück. Ohne Fomratierungen. Sag am Anfang Guten Morgen!"
-        response = use_case_processor.response(message, api_data)
-        return {"response": response}
-    
     async def get_morning(self) -> Dict[str, List[Dict[str, str]]]:
-        conn = await get_db_connection()
-        try:
-            user_ids = await conn.fetch("SELECT username FROM users")
-        finally:
-            await conn.close()
+        user_ids = await self.__get_all_users()
 
         results = []
         for record in user_ids:
@@ -133,6 +149,26 @@ class AnswerProcessor:
                 results.append({
                     "user_id": str(user_id),
                     "response": morning_result.get("response", "Fehler beim Abrufen")
+                })
+            except Exception as e:
+                results.append({
+                    "user_id": str(user_id),
+                    "response": f"Fehler: {str(e)}"
+                })
+
+        return {"results": results}
+    
+    async def get_proactivity(self) -> Dict[str, List[Dict[str, str]]]:
+        user_ids = await self.__get_all_users()
+
+        results = []
+        for record in user_ids:
+            user_id = record['username']
+            try:
+                proactivity_result = await self.__get_user_proactivity(user_id)
+                results.append({
+                    "user_id": str(user_id),
+                    "response": proactivity_result.get("response", "Fehler beim Abrufen")
                 })
             except Exception as e:
                 results.append({
