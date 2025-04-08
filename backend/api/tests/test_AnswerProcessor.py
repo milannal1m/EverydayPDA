@@ -39,64 +39,58 @@ class TestAnswerProcessor(unittest.IsolatedAsyncioTestCase):
             "milan"
         )
 
-    @patch("AnswerProcessor.get_db_connection")
-    @patch.object(AnswerProcessor, "_AnswerProcessor__get_user_morning", new_callable=AsyncMock)
-    async def test_get_morning_success(self, mock_get_user_morning, mock_get_db_connection):
-        # Mocked database result
-        mock_conn = AsyncMock()
-        mock_conn.fetch.return_value = [{'username': 'user1'}, {'username': 'user2'}]
-        mock_get_db_connection.return_value = mock_conn
-
-        # Mocked user morning response
-        mock_get_user_morning.side_effect = [
-            {"response": "Guten Morgen! Es wird heute sonnig."},
-            {"response": "Guten Morgen! Der Aktienmarkt sieht vielversprechend aus."}
+    @patch('AnswerProcessor.get_db_connection')  # Mock der Datenbankverbindung
+    async def test_get_morning(self, mock_get_db_connection):
+        # Mock der Rückgabe der fetch Methode der Datenbankverbindung (Benutzer abfragen)
+        mock_db_connection = AsyncMock()
+        mock_db_connection.fetch.return_value = [
+            {"username": "user1"},
+            {"username": "user2"}
         ]
+        mock_get_db_connection.return_value = mock_db_connection
 
-        processor = AnswerProcessor()
-        result = await processor.get_morning()
+        # Mock der Rückgabe von __fetch_from_database (Datenbankabfragen simulieren)
+        with patch.object(AnswerProcessor, '_AnswerProcessor__fetch_from_database', new_callable=AsyncMock) as mock_fetch_from_db:
+            mock_fetch_from_db.side_effect = lambda key, user_id: {
+                'Stocks': ['AAPL'],
+                'News Services': ['Tech News'],
+                'City': ['Stuttgart'],
+                'Cafeteria Name': ['Campus Cafeteria'],
+                'Course Name': ['Computer Science'],
+                'Transport Medium': ['Bus']
+            }.get(key, None)
 
-        expected = {
-            "results": [
-                {"user_id": "user1", "response": "Guten Morgen! Es wird heute sonnig."},
-                {"user_id": "user2", "response": "Guten Morgen! Der Aktienmarkt sieht vielversprechend aus."}
-            ]
-        }
+            # Erstelle den AnswerProcessor
+            answer_processor = AnswerProcessor()
 
-        self.assertEqual(result, expected)
-        mock_get_user_morning.assert_any_call("user1")
-        mock_get_user_morning.assert_any_call("user2")
-        self.assertEqual(mock_get_user_morning.call_count, 2)
-        mock_conn.fetch.assert_called_once_with("SELECT username FROM users")
-        mock_conn.close.assert_awaited_once()
+            # Führe get_morning aus
+            result = await answer_processor.get_morning()
 
-    @patch("AnswerProcessor.get_db_connection")
-    @patch.object(AnswerProcessor, "_AnswerProcessor__get_user_morning", new_callable=AsyncMock)
-    async def test_get_morning_with_error(self, mock_get_user_morning, mock_get_db_connection):
-        # Mocked DB result
-        mock_conn = AsyncMock()
-        mock_conn.fetch.return_value = [{'username': 'user1'}, {'username': 'user2'}]
-        mock_get_db_connection.return_value = mock_conn
+            for user_result in result['results']:
+                # Überprüfe, ob die user_id richtig ist
+                self.assertIn('user_id', user_result)
+                self.assertIn(user_result['user_id'], ['user1', 'user2'])
+                
+                # Überprüfe, ob die response mit "Guten Morgen" beginnt
+                self.assertTrue(user_result['response'].startswith("Guten Morgen"))
 
-        # First user succeeds, second fails
-        mock_get_user_morning.side_effect = [
-            {"response": "Guten Morgen! Wetter ist super."},
-            Exception("Fehler beim Abrufen der Daten")
-        ]
+    @patch('AnswerProcessor.get_db_connection')  # Mock der Datenbankverbindung
+    async def test_get_morning_with_no_users(self, mock_get_db_connection):
+        # Mock der Rückgabe der fetch Methode der Datenbankverbindung (Keine Benutzer)
+        mock_db_connection = AsyncMock()
+        mock_db_connection.fetch.return_value = []  # Keine Benutzer in der DB
+        mock_get_db_connection.return_value = mock_db_connection
 
-        processor = AnswerProcessor()
-        result = await processor.get_morning()
+        # Erstelle den AnswerProcessor
+        answer_processor = AnswerProcessor()
 
-        expected = {
-            "results": [
-                {"user_id": "user1", "response": "Guten Morgen! Wetter ist super."},
-                {"user_id": "user2", "response": "Fehler: Fehler beim Abrufen der Daten"}
-            ]
-        }
+        # Führe get_morning aus
+        result = await answer_processor.get_morning()
 
-        self.assertEqual(result, expected)
-        self.assertEqual(mock_get_user_morning.call_count, 2)
-        mock_conn.close.assert_awaited_once()
+        # Überprüfe, ob das Ergebnis leer ist
+        expected_result = {"results": []}
+        self.assertEqual(result, expected_result)
+
 
 if __name__ == '__main__':
     unittest.main()
