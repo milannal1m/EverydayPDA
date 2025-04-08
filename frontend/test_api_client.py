@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch, Mock
 import requests
-from api_handler import get_answer, get_preferences, post_preferences, put_preference
+from frontend.api_client import get_answer, get_preferences, post_preferences, put_preference
 
 class TestAPIHandler(unittest.TestCase):
 
