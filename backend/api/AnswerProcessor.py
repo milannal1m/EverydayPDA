@@ -108,7 +108,7 @@ class AnswerProcessor:
         response = use_case_processor.response(message, api_data)
         return {"response": response}
     
-    async def get_morning(self,user_id):
+    async def __get_user_morning(self,user_id):
         use_case_processor = UseCaseProcessor()
         use_cases = [UseCases.STOCKS.value, UseCases.NEWS.value, UseCases.WEATHER.value]
         info_dict = {info: "" for use_case in UseCases if use_case.value in use_cases for info in use_case.information_needed}
@@ -118,3 +118,28 @@ class AnswerProcessor:
         message = "Fass mir die wichtigsten Informationen für meinen Morgen zusammen. Geb mir das als einen zusammnhängenden Text zurück. Ohne Fomratierungen. Sag am Anfang Guten Morgen!"
         response = use_case_processor.response(message, api_data)
         return {"response": response}
+    
+    async def get_morning(self) -> Dict[str, List[Dict[str, str]]]:
+        conn = await get_db_connection()
+        try:
+            user_ids = await conn.fetch("SELECT username FROM users")
+        finally:
+            await conn.close()
+
+        results = []
+        for record in user_ids:
+            user_id = record['username']
+            try:
+                morning_result = await self.__get_user_morning(user_id)
+                results.append({
+                    "user_id": str(user_id),
+                    "response": morning_result.get("response", "Fehler beim Abrufen")
+                })
+            except Exception as e:
+                results.append({
+                    "user_id": str(user_id),
+                    "response": f"Fehler: {str(e)}"
+                })
+
+        return {"results": results}
+
