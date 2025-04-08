@@ -1,6 +1,8 @@
 import requests
 import os
 from dotenv import load_dotenv
+from geopy.geocoders import Nominatim # INSTALLIEREN!!!
+import time
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 env_path = os.path.join(BASE_DIR, ".env")
@@ -23,7 +25,7 @@ def get_stock_price(symbols):
         response = requests.get(url)
         stock = response.json()
 
-        # Filters out the stocks symbol, price and datetime
+        # Filters out the stocks, price and datetime
         stocks[symbol] = {
             "price": stock.get("values", [{}])[0].get("close"),
             "datetime": stock.get("values", [{}])[0].get("datetime")
@@ -50,7 +52,6 @@ def get_news(categories):
                 "title": article.get("title"),
                 "source": article.get("url")
             })
-
     return news
 
 # 3. Wetter (WeatherAPI)
@@ -62,7 +63,7 @@ def get_weather(cities):
         response = requests.get(url)
         condition = response.json()
 
-        # Filters out the locations name, temperature and feelsliek temperature
+        # Filters out the locations name, temperature and feelslike temperature
         weatherCities[city] = {
                 "temperature": condition.get("current", {}).get("temp_c"),
                 "feelslike": condition.get("current", {}).get("feelslike_c"),
@@ -71,67 +72,152 @@ def get_weather(cities):
             } 
                
     return weatherCities
-
-# 4. Wegezeitberechnung (OpenRouteService)
-def get_route_time(start):
-    url = "https://api.openrouteservice.org/v2/directions/driving-car"
-    headers = {"Authorization": OPENROUTE_API_KEY, "Content-Type": "application/json"}
-    params = {"start": f"{start[0]},{start[1]}", "end": f"{end[0]},{end[1]}"}
-    response = requests.get(url, headers=headers, params=params)
+'''
+# 4. Cafeteria (CafeteriaAPI)
+def get_cafeteria_menu(cafeteria_name):
+    url = f"https://api.cafeteriaapi.com/v1/menus?cafeteria={cafeteria_name}"
+    response = requests.get(url)
     return response.json()
 
-# 5a. Amadeus: Access Token abrufen
+# 5. Stundenplan (StundenplanAPI)
+def get_timetable(course_name):
+    url = f"https://api.stundenplanapi.com/v1/timetable?course={course_name}"
+    response = requests.get(url)
+    return response.json()
+'''
+
+# 6. Wegezeitberechnung (OpenRouteService)
+# Transport_Medium: "driving-car", "driving-hgv", "cycling-regular", "cycling-road", "cycling-mountain", "cycling-electric", "foot-walking", "foot-hiking", "wheelchair"
+def geocode_location(place):
+    geolocator = Nominatim(user_agent="route_planner")
+    location = geolocator.geocode(place)
+    time.sleep(1)  # Vermeidung von Rate-Limiting
+    if location:
+        return [location.longitude, location.latitude]
+    return None
+
+def get_travel_time(transport_medium, start_location, end_location):
+    start_coords = geocode_location(start_location)
+    end_coords = geocode_location(end_location)
+
+    if not start_coords or not end_coords:
+        return {"error": "Ungültiger Start- oder Zielort"}
+
+    url = f"https://api.openrouteservice.org/v2/directions/{transport_medium}/geojson"
+    headers = {
+        "Authorization": OPENROUTE_API_KEY,
+        "Content-Type": "application/json"
+    }
+
+    body = {
+        "coordinates": [start_coords, end_coords]
+    }
+
+    response = requests.post(url, json=body, headers=headers)
+    data = response.json()
+
+    if "features" not in data:
+        return {"error": data.get("error", response.text)}
+
+    segment = data["features"][0]["properties"]["segments"][0]
+    return {
+        "distance_km": round(segment["distance"] / 1000, 2),
+        "duration_min": round(segment["duration"] / 60, 2)
+    }
+
+
+# 7. Hotelsuche (Amadeus)
 def get_amadeus_token():
     url = "https://test.api.amadeus.com/v1/security/oauth2/token"
-    payload = {
+    data = {
         "grant_type": "client_credentials",
         "client_id": AMADEUS_CLIENT_ID,
         "client_secret": AMADEUS_CLIENT_SECRET
     }
-    headers = {"Content-Type": "application/x-www-form-urlencoded"}
-    response = requests.post(url, data=payload, headers=headers)
-    token_data = response.json()
-    return token_data.get("access_token")
+    response = requests.post(url, data=data)
+    return response.json().get("access_token")
 
-# 5b. Stadtcode (Amadeus)
-def get_city_code(city_name):
-    token = get_amadeus_token()
-    if not token:
-        return {"error": "Fehler beim Abrufen des Tokens"}
-    
-    url = f"https://test.api.amadeus.com/v1/reference-data/locations/cities?keyword={city_name}&max=10"
+def get_city_code(city_name, token): # Ortsname → City Code (z.B. "Stuttgart" → "STR")
+    url = "https://test.api.amadeus.com/v1/reference-data/locations"
+    params = {
+        "keyword": city_name,
+        "subType": "CITY"
+    }
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+    response = requests.get(url, headers=headers, params=params)
+    results = response.json().get("data", [])
+    #print("City Code:", results) # Debug-Ausgabe
+    if results:
+        return results[0]["iataCode"]
+    return None
+
+def get_city_hotels(city_code, token):
+    url = f"https://test.api.amadeus.com/v1/reference-data/locations/hotels/by-city"
     headers = {"Authorization": f"Bearer {token}"}
-    response = requests.get(url, headers=headers)
-    return response.json().get("data", [{}])[0].get("iataCode")
+    params = {
+        "cityCode": city_code,
+        "radius": 20,
+        "radiusUnit": "KM"
+    }
 
+    response = requests.get(url, headers=headers, params=params)
+    data = response.json()
+    hotel_ids = [hotel["hotelId"] for hotel in data.get("data", [])[:5]]  # max. 5 Hotels
+    return hotel_ids
 
-# 6. Hotelsuche (Amadeus)
-def get_hotels(city_names):
+def get_hotels(city, check_in, check_out):
     token = get_amadeus_token()
-    if not token:
-        return {"error": "Fehler beim Abrufen des Tokens"}
-    
-    hotels = {}
+    city_code = get_city_code(city, token)
+    if not city_code:
+        return {"error": "Ungültiger Ort"}
 
-    for city_name in city_names:
-        city_code = get_city_code(city_names)
-        url = f"https://test.api.amadeus.com/v1/reference-data/locations/hotels/by-city?cityCode={city_code}&radius=1&ratings=4&radiusUnit=KM&hotelSource=ALL"
-        headers = {"Authorization": f"Bearer {token}"}
-        hotel = requests.get(url, headers=headers)
-    
+    hotel_ids = get_city_hotels(city_code, token)
+    if not hotel_ids:
+        return {"error": "Keine Hotels gefunden"}
+
+    url = "https://test.api.amadeus.com/v3/shopping/hotel-offers"
+    headers = {"Authorization": f"Bearer {token}"}
+    params = {
+        "hotelIds": ",".join(hotel_ids),
+        "checkInDate": check_in,
+        "checkOutDate": check_out,
+        "adults": 1,
+        "currency": "EUR"
+    }
+
+    response = requests.get(url, headers=headers, params=params)
+    if response.status_code != 200:
+        return {"error": f"API-Fehler: {response.status_code} - {response.text}"}
+
+    data = response.json()
+    hotels = []
+    for item in data.get("data", []):
+        hotel_info = item.get("hotel", {})
+        offer_info = item.get("offers", [{}])[0]
+        price_info = offer_info.get("price", {})
+
+        hotels.append({
+            "name": hotel_info.get("name", "Unbekannt"),
+            "price": price_info.get("total", "k.A."),
+            "rating": hotel_info.get("rating", "k.A.")
+        })
+
     return hotels
 
-# 7. Fluginformationen (AviationStack)
+'''
+# 8. Fluginformationen (AviationStack)
 def get_flight_status(destination):
     url = f"http://api.aviationstack.com/v1/flights?access_key={AVIATION_STACK_API_KEY}&arr_iata=STR"
     response = requests.get(url)
     return response.json()
-
+'''
 # --- Testaufrufe ---
 if __name__ == "__main__":
     print("📈 Aktienkurs:", get_stock_price(["AAL", "GOOGL"]))
-    print("📰 Nachrichten:", get_news(["health"]))
+    print("📰 Nachrichten:", get_news(["economy"]))
     print("🌤️ Wetter:", get_weather(["Stuttgart"]))
-    #print("🚗 Routenzeit:", get_route_time())
-    #print("🏨 Hotels:", get_hotels())
+    print("🚗 Routenzeit:", get_travel_time("foot-walking", "Stuttgart", "Hamburg"))
+    print("🏨 Hotels:", get_hotels("Berlin", "2025-05-10", "2025-05-12"))
     #print("✈️ Flugstatus:", get_flight_status())
