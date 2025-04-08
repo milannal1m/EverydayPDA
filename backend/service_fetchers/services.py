@@ -1,7 +1,7 @@
 import requests
 import os
 from dotenv import load_dotenv
-from geopy.geocoders import Nominatim # INSTALLIEREN!!!
+#from geopy.geocoders import Nominatim # INSTALLIEREN!!!
 import time
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
@@ -25,19 +25,15 @@ def get_stock_price(symbols):
         response = requests.get(url)
         stock = response.json()
 
-<<<<<<< HEAD
-        url = f"https://api.twelvedata.com/quote?symbol={symbol}&interval=1week&apikey={TWELVE_DATA_API_KEY}"
+        url = f"https://api.twelvedata.com/quote?symbol={symbol}&interval=1h&apikey={TWELVE_DATA_API_KEY}"
         response = requests.get(url)
         stock.update(response.json())
 
         # Filters out the stocks symbol, price and datetime
-=======
-        # Filters out the stocks, price and datetime
->>>>>>> 2078eedb66ead6ca89de026983f18b2dc9b8dd97
         stocks[symbol] = {
             "price": stock.get("values", [{}])[0].get("close"),
             "datetime": stock.get("values", [{}])[0].get("datetime"),
-            "changeFromYesterday": stock.get("change")
+            "changeFrom1hour": stock.get("change")
         }
 
     return stocks
@@ -227,8 +223,8 @@ def get_flight_status(destination):
 # --- Testaufrufe ---
 if __name__ == "__main__":
     print("📈 Aktienkurs:", get_stock_price(["AAL", "GOOGL"]))
-    print("📰 Nachrichten:", get_news(["Technology"]))
-    print("🌤️ Wetter:", get_weather(["Stuttgart"]))
-    print("🚗 Routenzeit:", get_travel_time("wheelchair", "Stuttgart", "Hamburg"))
-    print("🏨 Hotels:", get_hotels("Berlin", "2025-05-10", "2025-05-12"))
+    #print("📰 Nachrichten:", get_news(["Technology"]))
+    #print("🌤️ Wetter:", get_weather(["Stuttgart"]))
+    #print("🚗 Routenzeit:", get_travel_time("wheelchair", "Stuttgart", "Hamburg"))
+    #print("🏨 Hotels:", get_hotels("Berlin", "2025-05-10", "2025-05-12"))
     #print("✈️ Flugstatus:", get_flight_status())
