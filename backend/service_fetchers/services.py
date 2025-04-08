@@ -23,10 +23,15 @@ def get_stock_price(symbols):
         response = requests.get(url)
         stock = response.json()
 
+        url = f"https://api.twelvedata.com/quote?symbol={symbol}&interval=1week&apikey={TWELVE_DATA_API_KEY}"
+        response = requests.get(url)
+        stock.update(response.json())
+
         # Filters out the stocks symbol, price and datetime
         stocks[symbol] = {
             "price": stock.get("values", [{}])[0].get("close"),
-            "datetime": stock.get("values", [{}])[0].get("datetime")
+            "datetime": stock.get("values", [{}])[0].get("datetime"),
+            "changeFromYesterday": stock.get("change")
         }
 
     return stocks
@@ -36,7 +41,7 @@ def get_news(categories):
     news = {}
 
     for category in categories:
-        url = f"https://newsapi.org/v2/top-headlines?category={category}&pageSize=2&apiKey={NEWS_API_KEY}"
+        url = f"https://newsapi.org/v2/top-headlines?category={category}&pageSize=1&apiKey={NEWS_API_KEY}"
         response = requests.get(url)
         articles = response.json().get("articles", [])
 
@@ -48,7 +53,8 @@ def get_news(categories):
         for article in articles:
             news[category].append({ 
                 "title": article.get("title"),
-                "source": article.get("url")
+                "source": article.get("url"),
+                "publishedAt": article.get("publishedAt"),
             })
 
     return news
@@ -114,12 +120,12 @@ def get_hotels(city_names):
     hotels = {}
 
     for city_name in city_names:
-        city_code = get_city_code(city_names)
+        city_code = get_city_code(city_name)
         url = f"https://test.api.amadeus.com/v1/reference-data/locations/hotels/by-city?cityCode={city_code}&radius=1&ratings=4&radiusUnit=KM&hotelSource=ALL"
         headers = {"Authorization": f"Bearer {token}"}
         hotel = requests.get(url, headers=headers)
     
-    return hotels
+    return hotel.json()
 
 # 7. Fluginformationen (AviationStack)
 def get_flight_status(destination):
@@ -129,15 +135,9 @@ def get_flight_status(destination):
 
 # --- Testaufrufe ---
 if __name__ == "__main__":
-<<<<<<< HEAD
-    #print("📈 Aktienkurs:", get_stock_price())
-    #print("📰 Nachrichten:", get_news())
-    #print("🌤️ Wetter:", get_weather())
-=======
-    print("📈 Aktienkurs:", get_stock_price(["AAL", "GOOGL"]))
-    print("📰 Nachrichten:", get_news(["health"]))
-    print("🌤️ Wetter:", get_weather(["Stuttgart"]))
->>>>>>> 1ce5591e33ec4f2818a6de0112169fe5920d6c70
+    #print("📈 Aktienkurs:", get_stock_price(["AAL", "GOOGL"]))
+    print("📰 Nachrichten:", get_news(["general"]))
+    #print("🌤️ Wetter:", get_weather(["Stuttgart"]))
     #print("🚗 Routenzeit:", get_route_time())
-    #print("🏨 Hotels:", get_hotels())
+    #print("🏨 Hotels:", get_hotels(["Berlin"]))
     #print("✈️ Flugstatus:", get_flight_status())
