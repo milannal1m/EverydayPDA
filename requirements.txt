@@ -6,8 +6,9 @@ dotenv
 fastapi
 ffmpeg-python
 gTTS
+geopy
 httpx
-openai==0.28.0
+openai
 psycopg2
 python-telegram-bot
 pytz

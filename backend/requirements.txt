@@ -4,6 +4,7 @@ psycopg2
 asyncpg
 httpx
 requests
-openai==0.28.0
+openai
 dotenv
 coverage
+geopy
