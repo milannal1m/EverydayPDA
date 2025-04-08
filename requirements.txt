@@ -6,6 +6,7 @@ dotenv
 fastapi
 ffmpeg-python
 gTTS
+geopy
 httpx
 openai
 psycopg2
