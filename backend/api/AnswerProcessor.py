@@ -32,7 +32,9 @@ class AnswerProcessor:
             'City': "SELECT city FROM users WHERE username = $1",
             'Cafeteria Name': "SELECT cafeteria FROM users WHERE username = $1",
             'Course Name': "SELECT course FROM users WHERE username = $1",
-            'Transport Medium': "SELECT preferred_transport_medium FROM users WHERE username = $1"
+            'Transport Medium': "SELECT preferred_transport_medium FROM users WHERE username = $1",
+            'Start_Airpot':  "SELECT city FROM users WHERE username = $1",
+            'Start_Location': "SELECT city FROM users WHERE username = $1",
         }
         
         query = query_map.get(key)
@@ -68,7 +70,7 @@ class AnswerProcessor:
         """
         for key in data.keys():
             if data[key] == [""] or data[key] == "":
-                if key in ['Stocks', 'News Services', 'City', 'Cafeteria Name', 'Course Name', 'Transport Medium']:
+                if key in ['Stocks', 'News Services', 'City', 'Cafeteria Name', 'Course Name', 'Transport Medium', 'Start_Airpot', 'Start_Location']:
                     data[key] = await self.__fetch_from_database(key, user_id) or 'Unknown'
                 else:
                     data[key] = self.__get_default_value(key)

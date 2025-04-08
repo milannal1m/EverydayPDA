@@ -34,6 +34,7 @@ def get_stock_price(symbols):
     return stocks
 
 # 2. Nachrichten (NewsAPI)
+#Themen: business entertainment general health science sports technology
 def get_news(categories):
     news = {}
 
@@ -216,8 +217,8 @@ def get_flight_status(destination):
 # --- Testaufrufe ---
 if __name__ == "__main__":
     print("📈 Aktienkurs:", get_stock_price(["AAL", "GOOGL"]))
-    print("📰 Nachrichten:", get_news(["economy"]))
+    print("📰 Nachrichten:", get_news(["Technology"]))
     print("🌤️ Wetter:", get_weather(["Stuttgart"]))
-    print("🚗 Routenzeit:", get_travel_time("foot-walking", "Stuttgart", "Hamburg"))
+    print("🚗 Routenzeit:", get_travel_time("wheelchair", "Stuttgart", "Hamburg"))
     print("🏨 Hotels:", get_hotels("Berlin", "2025-05-10", "2025-05-12"))
     #print("✈️ Flugstatus:", get_flight_status())
