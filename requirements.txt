@@ -9,7 +9,7 @@ gTTS
 geopy
 httpx
 openai
-psycopg2
+psycopg2-binary
 python-telegram-bot
 python-telegram-bot[job-queue]
 pytz
