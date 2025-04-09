@@ -28,16 +28,15 @@ def get_stock_price(symbols):
         response = requests.get(url)
         stock.update(response.json())
 
-        if "code" in stock == 400:
+        if response.json().get("code") == 400:
             stocks = {}
-            break
-
-        # Filters out the stocks symbol, price and datetime
-        stocks[symbol] = {
-            "price": stock.get("values", [{}])[0].get("close"),
-            "datetime": stock.get("values", [{}])[0].get("datetime"),
-            "changeFrom1hour": stock.get("change")
-        }
+        else:
+            # Filters out the stocks symbol, price and datetime
+            stocks[symbol] = {
+                "price": stock.get("values", [{}])[0].get("close"),
+                "datetime": stock.get("values", [{}])[0].get("datetime"),
+                "changeFrom1hour": stock.get("change")
+            }
 
     return stocks
 
@@ -52,21 +51,20 @@ def get_news(categories):
         response = requests.get(url)
         articles = response.json().get("articles", [])
 
-        # Adds the category to the news dictionary
-        if category not in news:
-            news[category] = []
-
-        if "totalResults" in articles == 0:
+        if response.json().get("totalResults") == 0:
             news = {}
-            break
+        else:
+            # Adds the category to the news dictionary
+            if category not in news:
+                news[category] = []
 
-        # Filters out the articles title and url
-        for article in articles:
-            news[category].append({ 
-                "title": article.get("title"),
-                "source": article.get("url"),
-                "publishedAt": article.get("publishedAt"),
-            })
+            # Filters out the articles title and url
+            for article in articles:
+                news[category].append({ 
+                    "title": article.get("title"),
+                    "source": article.get("url"),
+                    "publishedAt": article.get("publishedAt"),
+                })
 
     return news
 
@@ -141,25 +139,14 @@ def get_meals_by_name_and_date(canteen_name, date):
     return response.json()
 
 
-'''
     
-# 5. Stundenplan (StundenplanAPI)
+#5. Stundenplan (StundenplanAPI)
 def get_rapla_scedule(user_id, semester):
-    url = f"https://rapla-api.dhbw-stuttgart.de/v1/stundenplan/{user_id}/{semester}"
+    url = f"https://rapla.dhbw.de/rapla/file=6Q0QSbNtpyeYPKQhnGFTaEN6AggaPdGgCFyhd5ANmjydX8WyDjUfLBh4YjDgat2dJd8as6Az5GGmQilBwJydDTQpeHfV6bTghpX2dlRU6RU5QsAKr6ARjgRj_BxZmmhVA3Tk_bSK4acN3oO7a7PkNAHTfszb0OA4_JMp8zdoYDY/user=inf22168@lehre.dhbw-stuttgart.de/day=today"
     response = requests.get(url)
     
-    # Überprüfen, ob der API-Aufruf erfolgreich war
-    if response.status_code != 200:
-        return {"error": f"Fehler beim Abrufen des Stundenplans: {response.status_code}"}
-    
-    # JSON-Daten aus der API-Antwort extrahieren
-    data = response.json()
-    
-    if "error" in data:
-        return {"error": f"API-Fehler: {data['error']}"}
-    
-    return data
-'''
+    return response.json()
+
 
 
 
@@ -301,22 +288,11 @@ def get_flights(origin_city, destination_city, departure_date, return_date):
 
 # --- Testaufrufe ---
 if __name__ == "__main__":
-<<<<<<< HEAD
-    #print("📈 Aktienkurs:", get_stock_price(["AASL", "GOOGL"]))
-    print("📰 Nachrichten:", get_news(["busiess"]))
-    #print("🌤️ Wetter:", get_weather(["Stuttgart"]))
-    #print("🍽️ Mensa:", get_cafeteria_menu("Mensa Stuttgart"))
-    #print("📅 Stundenplan:", get_timetable("IN22"))
-    #print("🚗 Routenzeit:", get_travel_time("driving-car", "Stuttgart", "Hamburg"))
-    #print("🏨 Hotels:", get_hotels("Stuttgart", "2025-05-10", "2025-05-12"))
-    #print("✈️ Flugstatus:", get_flights("Stuttgart", "London", "2025-05-10", "2025-05-15"))
-=======
     #print("📈 1: Aktienkurs:", get_stock_price(["AAL", "GOOGL"]))
-    #print("📰 2: Nachrichten:", get_news(["business"]))
+    #print("📰 2: Nachrichten:", get_news(["busness"]))
     #print("🌤️ 3: Wetter:", get_weather(["Stuttgart"]))
-    print("🍽️ 4: Mensa:", get_meals_by_name_and_date("mensa central stuttgart", "2025-04-09"))
-    #print("📅 5: Stundenplan:", get_rapla_scedule("doelker%40verwaltung.ba-stuttgart.de", "2025SS"))
+    #print("🍽️ 4: Mensa:", get_meals_by_name_and_date("mensa central stuttgart", "2025-04-09"))
+    print("📅 5: Stundenplan:", get_rapla_scedule("doelker%40verwaltung.ba-stuttgart.de", "2025SS"))
     #print("🚗 6: Routenzeit:", get_travel_time("driving-car", "Stuttgart", "Hamburg"))
     #print("🏨 7: Hotels:", get_hotels("Stuttgart", "2025-05-10", "2025-05-12"))
     #print("✈️ 8: Flugstatus:", get_flights("Stuttgart", "London", "2025-05-10", "2025-05-15"))
->>>>>>> e3722d7c11294678e60c0f8ec9bab160ebc3f289
