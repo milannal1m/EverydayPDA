@@ -9,8 +9,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from api.answer_processor import AnswerProcessor
 from api.models import User, UserUpdate
-from api.preference_endpoints import (
-    initialize_user_preferences,
+from api.database_utils import (
+    init_user_preferences,
     get_user_preferences,
     update_user_preferences,
 )
@@ -54,14 +54,14 @@ async def init_preferences(user: User):
     """
     Initialize user preferences in the database.
     """
-    return await initialize_user_preferences(user)
+    return await init_user_preferences(user)
 
 @app.get("/preferences/{username}", response_model=User)
 async def get_preferences(username: str) -> Optional[User]:
     """
     Retrieve user preferences from the database.
     """
-    r
+    return await get_user_preferences(username)
 
 @app.put("/preferences/{username}")
 async def update_preferences(username: str, user: UserUpdate):
