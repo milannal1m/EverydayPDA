@@ -24,10 +24,16 @@ def get_morning_message(user_id: int) -> str:
         response = requests.get(url, params=params)
 
         if response.status_code == 200:
-            return(response.json()["response"])
+            # JSON-Antwort parsen
+            results = response.json().get("results", [])
+            # Nach der user_id suchen
+            for item in results:
+                if str(item.get("user_id")) == str(user_id):
+                    return item.get("response", "Keine Antwort gefunden.")
+            return "Die user_id wurde in der Antwort nicht gefunden."
         else:
             return f"{response.status_code}: Fehler bei der Anfrage an die API."
-    except:
+    except requests.RequestException:
         return "Ich kann mich gerade nicht mit der API verbinden."
 
 
@@ -79,7 +85,6 @@ def put_preference(user_id: int, key: str, new_value):
     url = f"http://api:8000/preferences/{user_id}"
     
     try:
-        # Aktuelle Präferenzen abrufen
         response = requests.get(url)
         
         if response.status_code != 200:
@@ -89,14 +94,11 @@ def put_preference(user_id: int, key: str, new_value):
 
         extra_keys = ["delete_stocks", "add_stocks", "delete_news", "add_news"]
 
-        # Überprüfen, ob der Schlüssel existiert
         if key not in current_data and key not in extra_keys:
             return f"Ungültige Präferenz: {key}"
 
-        # Nur den gewünschten Key aktualisieren
         current_data[key] = new_value
 
-        # Aktualisierte Präferenzen senden
         put_response = requests.put(url, json=current_data)
 
         if put_response.status_code == 200:
