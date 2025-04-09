@@ -1,7 +1,7 @@
 import requests
 import os
 from dotenv import load_dotenv
-from geopy.geocoders import Nominatim # INSTALLIEREN!!!
+#from geopy.geocoders import Nominatim # INSTALLIEREN!!!
 import time
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
@@ -23,10 +23,15 @@ def get_stock_price(symbols):
         response = requests.get(url)
         stock = response.json()
 
-        # Filters out the stocks, price and datetime
+        url = f"https://api.twelvedata.com/quote?symbol={symbol}&interval=1h&apikey={TWELVE_DATA_API_KEY}"
+        response = requests.get(url)
+        stock.update(response.json())
+
+        # Filters out the stocks symbol, price and datetime
         stocks[symbol] = {
             "price": stock.get("values", [{}])[0].get("close"),
-            "datetime": stock.get("values", [{}])[0].get("datetime")
+            "datetime": stock.get("values", [{}])[0].get("datetime"),
+            "changeFrom1hour": stock.get("change")
         }
 
     return stocks
@@ -38,7 +43,7 @@ def get_news(categories):
     news = {}
 
     for category in categories:
-        url = f"https://newsapi.org/v2/top-headlines?category={category}&pageSize=2&apiKey={NEWS_API_KEY}"
+        url = f"https://newsapi.org/v2/top-headlines?category={category}&pageSize=1&apiKey={NEWS_API_KEY}"
         response = requests.get(url)
         articles = response.json().get("articles", [])
 
@@ -50,7 +55,8 @@ def get_news(categories):
         for article in articles:
             news[category].append({ 
                 "title": article.get("title"),
-                "source": article.get("url")
+                "source": article.get("url"),
+                "publishedAt": article.get("publishedAt"),
             })
     return news
 

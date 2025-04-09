@@ -6,10 +6,12 @@ dotenv
 fastapi
 ffmpeg-python
 gTTS
+geopy
 httpx
 openai
 psycopg2
 python-telegram-bot
+python-telegram-bot[job-queue]
 pytz
 requests
 soundfile

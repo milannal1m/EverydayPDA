@@ -26,13 +26,14 @@ async def get_answer(message: str = Query(..., min_length=1), user_id : str = Qu
     return await answer_processor.get_answer(message, user_id)
 
 @app.get("/morning")
-async def get_morning(user_id : str = Query(..., min_length=1)):
+async def get_morning():
     answer_processor = AnswerProcessor()
-    return await answer_processor.get_morning(user_id)
+    return await answer_processor.get_morning()
 
 @app.get("/proactivity")
-def get_proactivity():
-    return {"proactivity": "proactivity"}
+async def get_proactivity():
+    answer_processor = AnswerProcessor()
+    return await answer_processor.get_proactivity()
 
 @app.post("/preferences/init")
 async def init_preferences(user: User):

@@ -5,7 +5,7 @@ from telegram.ext import CallbackContext
 import logging
 
 # Angenommene Funktion, die wir testen möchten:
-from bot import start, kurs, mensa, user_data_store, api_handler, answer, button_click, kurs_update, show_preferences  # Beispiel-Import
+from bot import start, course, cafeteria, user_data_store, api_client, answer, button_click, course_update, show_preferences  # Beispiel-Import
 
 class TestTelegramBot(unittest.TestCase):
     def setUp(self):
@@ -40,7 +40,7 @@ class TestTelegramBot(unittest.TestCase):
         mock_reply_text.return_value = None
 
         # Führe den Handler aus
-        await kurs(self.mock_update, self.mock_context)
+        await course(self.mock_update, self.mock_context)
 
         # Überprüfen, ob die Antwort richtig gesendet wurde
         mock_reply_text.assert_any_call("Wo ist deine Mensa (z. B. Mensa Central)?")
@@ -70,7 +70,7 @@ class TestTelegramBot(unittest.TestCase):
         self.mock_update.message.text = "IN23"
 
         # Führe den Handler aus (Kurs-Update Beispiel)
-        await kurs_update(self.mock_update, self.mock_context)
+        await course_update(self.mock_update, self.mock_context)
 
         # Überprüfen, ob der API-Aufruf gemacht wurde
         mock_put_preference.assert_called_once_with(self.mock_user_id, "course", "IN23")
