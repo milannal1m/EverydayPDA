@@ -148,3 +148,10 @@ async def update_user_preferences(username: str, user: UserUpdate):
         return {"message": "User preferences updated successfully"}
     finally:
         await conn.close()
+
+async def get_all_users():
+    conn = await get_db_connection()
+    try:
+        return await conn.fetch("SELECT username FROM users")
+    finally:
+        await conn.close()

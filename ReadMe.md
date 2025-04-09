@@ -10,21 +10,25 @@
 
 ## Coverage
 
-![Coverage](https://img.shields.io/badge/Coverage-75.6%25-brightgreen)
+![Coverage](https://img.shields.io/badge/Coverage-41.5%25-brightgreen)
 
 | Datei | Coverage (%) |
 |---|---|
 | backend/UseCases.py | 95.5% |
-| backend/api/AnswerProcessor.py | 92.2% |
-| backend/api/database.py | 75.0% |
+| backend/api/answer_processor.py | 32.4% |
+| backend/api/data_filler.py | 39.3% |
+| backend/api/database.py | 100.0% |
+| backend/api/database_utils.py | 17.9% |
 | backend/api/main.py | 81.8% |
 | backend/api/models.py | 100.0% |
-| backend/api/preference_endpoints.py | 100.0% |
+| backend/api/preference_endpoints.py | 13.9% |
+| backend/api/summary_generator.py | 32.5% |
+| backend/api/usecase_handler.py | 38.5% |
 | backend/llm_fetchers/ChatGPTProcessor.py | 90.0% |
 | backend/llm_fetchers/UseCaseProcessor.py | 78.6% |
-| backend/service_fetchers/services.py | 37.4% |
-| frontend/api_client.py | 62.9% |
-| **Projekt** | **75.6%** |
+| backend/service_fetchers/services.py | 17.4% |
+| frontend/api_client.py | 58.2% |
+| **Projekt** | **41.5%** |
 
 ## API
 

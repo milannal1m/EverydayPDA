@@ -1,7 +1,6 @@
 import os
 import logging
 import datetime
-import pytz
 
 from telegram import Update
 from telegram.ext import (
@@ -40,11 +39,49 @@ logger = logging.getLogger(__name__)
 
 async def send_morning_message(context: ContextTypes.DEFAULT_TYPE):
     """Tägliche Morgenbotschaft über JobQueue senden."""
-    chat_id = 8196289694 # sollte bekommen werden
-    text = api_client.get_morning_message(chat_id)
-    voice_output_path = speech_utils.generate_voice_message(text)
-    await context.bot.send_message(chat_id=chat_id, text=text)
-    await context.bot.send_voice(chat_id=chat_id, voice=open(voice_output_path, "rb"))
+
+    response = api_client.get_all_morning_messages()
+
+    if isinstance(response, str):
+        # Fehlermeldung loggen oder ausgeben und Abbruch
+        logger.warning(f"Fehler beim Abrufen der Morgenmeldungen: {response}")
+        return
+    for item in response:
+        text = item["response"]
+        user_id = item["user_id"]
+
+        if text is None:
+            logger.warning(f"Keine Morgenmeldung für Benutzer {user_id} gefunden.")
+            continue
+
+        voice_output_path = speech_utils.generate_voice_message(text)
+
+        await context.bot.send_message(chat_id=user_id, text=text)
+        await context.bot.send_voice(chat_id=user_id, voice=open(voice_output_path, "rb"))
+
+
+async def send_proactivity_message(context: ContextTypes.DEFAULT_TYPE):
+    """Tägliche Morgenbotschaft über JobQueue senden."""
+
+    response = api_client.get_all_proactivity_messages()
+
+    if isinstance(response, str):
+        # Fehlermeldung loggen oder ausgeben und Abbruch
+        logger.warning(f"Fehler beim Abrufen der Proaktivitätsmeldungen: {response}")
+        return
+    for item in response:
+        text = item["response"]
+        user_id = item["user_id"]
+
+        if text is None:
+            logger.warning(f"Keine Proaktivitätsmeldung für Benutzer {user_id} gefunden.")
+            continue
+
+        voice_output_path = speech_utils.generate_voice_message(text)
+
+        await context.bot.send_message(chat_id=user_id, text=text)
+        await context.bot.send_voice(chat_id=user_id, voice=open(voice_output_path, "rb"))
+
 
 async def handle_incoming_message(update: Update, context: CallbackContext):
     """
@@ -111,12 +148,20 @@ def run_bot():
         MessageHandler((filters.TEXT & ~filters.COMMAND) | filters.VOICE, handle_incoming_message)
     )
     application.add_handler(CommandHandler("showpref", show_preferences))
-    application.add_handler(CommandHandler("morning", send_morning_message))
+    #application.add_handler(CommandHandler("morning", send_morning_message))
+    #application.add_handler(CommandHandler("proactivity", send_proactivity_message))
 
     application.job_queue.run_daily(
         send_morning_message,
-        time=datetime.time(hour=7, minute=0, second=0),
+        time=datetime.time(hour=21, minute=19, second=0), # 9 Uhr in DE-> 7 Uhr UTC
         name="morning_message"
+    )
+
+    application.job_queue.run_repeating(
+        send_proactivity_message,
+        interval=60,  # 3600 Sekunden = 1 Stunde
+        first=0,        # Startet den Job sofort beim Hochfahren
+        name="proactivity_message"
     )
 
     # Start polling
@@ -125,4 +170,4 @@ def run_bot():
 
 if __name__ == "__main__":
     run_bot()
-    
+
