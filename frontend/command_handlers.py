@@ -7,6 +7,7 @@ from telegram.ext import (
 )
 
 import api_client
+import preferences_model
 
 # Logging
 logger = logging.getLogger(__name__)
