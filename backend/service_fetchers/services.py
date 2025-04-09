@@ -301,16 +301,6 @@ def get_flights(origin_city, destination_city, departure_date, return_date):
 
 # --- Testaufrufe ---
 if __name__ == "__main__":
-<<<<<<< HEAD
-    #print("📈 Aktienkurs:", get_stock_price(["AASL", "GOOGL"]))
-    print("📰 Nachrichten:", get_news(["busiess"]))
-    #print("🌤️ Wetter:", get_weather(["Stuttgart"]))
-    #print("🍽️ Mensa:", get_cafeteria_menu("Mensa Stuttgart"))
-    #print("📅 Stundenplan:", get_timetable("IN22"))
-    #print("🚗 Routenzeit:", get_travel_time("driving-car", "Stuttgart", "Hamburg"))
-    #print("🏨 Hotels:", get_hotels("Stuttgart", "2025-05-10", "2025-05-12"))
-    #print("✈️ Flugstatus:", get_flights("Stuttgart", "London", "2025-05-10", "2025-05-15"))
-=======
     #print("📈 1: Aktienkurs:", get_stock_price(["AAL", "GOOGL"]))
     #print("📰 2: Nachrichten:", get_news(["business"]))
     #print("🌤️ 3: Wetter:", get_weather(["Stuttgart"]))
@@ -319,4 +309,3 @@ if __name__ == "__main__":
     #print("🚗 6: Routenzeit:", get_travel_time("driving-car", "Stuttgart", "Hamburg"))
     #print("🏨 7: Hotels:", get_hotels("Stuttgart", "2025-05-10", "2025-05-12"))
     #print("✈️ 8: Flugstatus:", get_flights("Stuttgart", "London", "2025-05-10", "2025-05-15"))
->>>>>>> e3722d7c11294678e60c0f8ec9bab160ebc3f289
