@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch, AsyncMock, MagicMock
 import os
 import sys
+from datetime import datetime, timezone, timedelta
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from AnswerProcessor import AnswerProcessor, UseCases
@@ -90,6 +91,60 @@ class TestAnswerProcessor(unittest.IsolatedAsyncioTestCase):
         # Überprüfe, ob das Ergebnis leer ist
         expected_result = {"results": []}
         self.assertEqual(result, expected_result)
+
+    @patch.object(AnswerProcessor, '_AnswerProcessor__get_all_users', new_callable=AsyncMock)
+    @patch.object(AnswerProcessor, '_AnswerProcessor__get_api_data_without_gpt', new_callable=AsyncMock)
+    async def test_get_proactivity_with_real_logic(self, mock_get_api_data, mock_get_all_users):
+        # Arrange
+        mock_get_all_users.return_value = [{'username': 'user1'}]
+
+        timestamp = (datetime.now(timezone.utc) - timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        mock_get_api_data.return_value = {
+            'Stock Market Information': {'AAL': {'price': '9.080000', 'datetime': '2025-04-08 15:59:00', 'change1hour': '0.0012998581'}, 'AAPL': {'price': '172.77000', 'datetime': '2025-04-08 15:59:00', 'change1hour': '-0.11999512'}}
+            , 'Latest News Updates': {'Technology': [{'title': 'Google Releases Android Update to Patch Two Actively Exploited Vulnerabilities - The Hacker News', 'source': 'https://thehackernews.com/2025/04/google-releases-android-update-to-patch.html', 'publishedAt': f"{timestamp}"}]}
+            }
+
+        # Act
+        result = await self.processor.get_proactivity()
+
+        # Assert
+        self.assertIn("results", result)
+        self.assertEqual(len(result["results"]), 1)
+        self.assertEqual(result["results"][0]["user_id"], "user1")
+        self.assertIn("Hey, hast du schon gehört", result["results"][0]["response"])
+
+    @patch.object(AnswerProcessor, '_AnswerProcessor__get_all_users', new_callable=AsyncMock)
+    @patch.object(AnswerProcessor, '_AnswerProcessor__get_api_data_without_gpt', new_callable=AsyncMock)
+    async def test_get_proactivity_no_changes(self, mock_get_api_data, mock_get_all_users):
+        # Arrange
+        mock_get_all_users.return_value = [{'username': 'user1'}]
+
+        timestamp = (datetime.now(timezone.utc) - timedelta(minutes=90)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        
+        mock_get_api_data.return_value = {
+            'Stock Market Information': {'AAL': {'price': '9.080000', 'datetime': '2025-04-08 15:59:00', 'change1hour': '0.0012998581'}, 'AAPL': {'price': '172.77000', 'datetime': '2025-04-08 15:59:00', 'change1hour': '-0.11999512'}}
+            , 'Latest News Updates': {'Technology': [{'title': 'Google Releases Android Update to Patch Two Actively Exploited Vulnerabilities - The Hacker News', 'source': 'https://thehackernews.com/2025/04/google-releases-android-update-to-patch.html', 'publishedAt': f"{timestamp}"}]}
+            }
+
+        # Act
+        result = await self.processor.get_proactivity()
+
+        # Assert
+        self.assertIsNone(result["results"][0]["response"])  # keine Antwort ohne Veränderung
+
+    @patch.object(AnswerProcessor, '_AnswerProcessor__get_all_users', new_callable=AsyncMock)
+    @patch.object(AnswerProcessor, '_AnswerProcessor__get_api_data_without_gpt', new_callable=AsyncMock)
+    async def test_get_proactivity_error_handling(self, mock_get_api_data, mock_get_all_users):
+        # Arrange
+        mock_get_all_users.return_value = [{'username': 'user1'}]
+        
+        mock_get_api_data.side_effect = Exception("API failed")
+
+        # Act
+        result = await self.processor.get_proactivity()
+
+        # Assert
+        self.assertIn("Fehler: API failed", result["results"][0]["response"])
 
 
 if __name__ == '__main__':
