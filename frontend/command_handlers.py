@@ -55,7 +55,7 @@ TRANSPORT_CATEGORIES = [
 user_data_store = {}
 
 ##############################################
-# CONVERSATION HANDLER: Einrichtungsprozess
+# /START HANDLER: Einrichtungsprozess
 ##############################################
 
 async def start_initialization(update: Update, context: CallbackContext):
@@ -234,7 +234,7 @@ async def end_initialization(update: Update, context: CallbackContext):
 
 
 ##############################################
-# COMMAND HANDLER für Präferenzen ändern
+# /SHOWPREF & /CHANGEPREF HANDLERS
 ##############################################
 
 async def ask_user_for_preference_change(update: Update, context: CallbackContext, state: int, message: str):
