@@ -1,7 +1,7 @@
 import requests
 import os
 from dotenv import load_dotenv
-from geopy.geocoders import Nominatim # INSTALLIEREN!!!
+#from geopy.geocoders import Nominatim # INSTALLIEREN!!!
 import time
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
@@ -27,6 +27,10 @@ def get_stock_price(symbols):
         response = requests.get(url)
         stock.update(response.json())
 
+        if "code" in stock == 400:
+            stocks = {}
+            break
+
         # Filters out the stocks symbol, price and datetime
         stocks[symbol] = {
             "price": stock.get("values", [{}])[0].get("close"),
@@ -51,6 +55,10 @@ def get_news(categories):
         if category not in news:
             news[category] = []
 
+        if "totalResults" in articles == 0:
+            news = {}
+            break
+
         # Filters out the articles title and url
         for article in articles:
             news[category].append({ 
@@ -58,6 +66,7 @@ def get_news(categories):
                 "source": article.get("url"),
                 "publishedAt": article.get("publishedAt"),
             })
+
     return news
 
 
@@ -241,11 +250,11 @@ def get_flights(origin_city, destination_city, departure_date, return_date):
 
 # --- Testaufrufe ---
 if __name__ == "__main__":
-    print("📈 Aktienkurs:", get_stock_price(["AAL", "GOOGL"]))
-    print("📰 Nachrichten:", get_news(["business"]))
-    print("🌤️ Wetter:", get_weather(["Stuttgart"]))
+    #print("📈 Aktienkurs:", get_stock_price(["AASL", "GOOGL"]))
+    print("📰 Nachrichten:", get_news(["busiess"]))
+    #print("🌤️ Wetter:", get_weather(["Stuttgart"]))
     #print("🍽️ Mensa:", get_cafeteria_menu("Mensa Stuttgart"))
     #print("📅 Stundenplan:", get_timetable("IN22"))
-    print("🚗 Routenzeit:", get_travel_time("driving-car", "Stuttgart", "Hamburg"))
-    print("🏨 Hotels:", get_hotels("Stuttgart", "2025-05-10", "2025-05-12"))
-    print("✈️ Flugstatus:", get_flights("Stuttgart", "London", "2025-05-10", "2025-05-15"))
+    #print("🚗 Routenzeit:", get_travel_time("driving-car", "Stuttgart", "Hamburg"))
+    #print("🏨 Hotels:", get_hotels("Stuttgart", "2025-05-10", "2025-05-12"))
+    #print("✈️ Flugstatus:", get_flights("Stuttgart", "London", "2025-05-10", "2025-05-15"))
