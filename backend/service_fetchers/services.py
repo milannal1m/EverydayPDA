@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 #from geopy.geocoders import Nominatim # INSTALLIEREN!!!
 import time
+import difflib # Installieren!!!
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 env_path = os.path.join(BASE_DIR, ".env")
@@ -95,19 +96,69 @@ def get_weather(cities):
 
 
 
-'''
+
 # 4. Cafeteria (CafeteriaAPI)
-def get_cafeteria_menu(cafeteria_name):
-    url = f"https://api.cafeteriaapi.com/v1/menus?cafeteria={cafeteria_name}"
+def get_canteen_id_by_fuzzy_name(name_query, min_ratio=0.6):
+    url = "https://openmensa.org/api/v2/canteens"
+    page = 1
+    candidates = {}
+
+    while True:
+        response = requests.get(url, params={"page": page})
+        if response.status_code != 200:
+            return None
+
+        canteens = response.json()
+        if not canteens:
+            break
+
+        for canteen in canteens:
+            full_name = f"{canteen.get('name', '')} {canteen.get('city', '')}"
+            candidates[full_name] = canteen["id"]
+
+        page += 1
+
+    # Fuzzy Match
+    matches = difflib.get_close_matches(name_query, candidates.keys(), n=1, cutoff=min_ratio)
+    if not matches:
+        return None
+
+    return candidates[matches[0]]
+
+def get_meals_by_name_and_date(canteen_name, date):
+    canteen_id = get_canteen_id_by_fuzzy_name(canteen_name)
+    print(f"Kantinen-ID:", canteen_id)
+    # canteen_id = 1202  # ID der Mensa Central Stuttgart (Beispiel)
+    if not canteen_id:
+        return {"error": "Kantine nicht gefunden."}
+
+    url = f"https://openmensa.org/api/v2/canteens/{canteen_id}/days/{date}/meals"
     response = requests.get(url)
+
+    if response.status_code != 200:
+        return {"error": f"Fehler beim Abrufen: {response.status_code}"}
+
     return response.json()
 
+
+'''
     
 # 5. Stundenplan (StundenplanAPI)
-def get_timetable(course_name):
-    url = f"https://api.stundenplanapi.com/v1/timetable?course={course_name}"
+def get_rapla_scedule(user_id, semester):
+    url = f"https://rapla-api.dhbw-stuttgart.de/v1/stundenplan/{user_id}/{semester}"
     response = requests.get(url)
-    return response.json()
+    
+    # Überprüfen, ob der API-Aufruf erfolgreich war
+    if response.status_code != 200:
+        return {"error": f"Fehler beim Abrufen des Stundenplans: {response.status_code}"}
+    
+    # JSON-Daten aus der API-Antwort extrahieren
+    data = response.json()
+    
+    if "error" in data:
+        return {"error": f"API-Fehler: {data['error']}"}
+    
+    return data
 '''
 
 
@@ -250,6 +301,7 @@ def get_flights(origin_city, destination_city, departure_date, return_date):
 
 # --- Testaufrufe ---
 if __name__ == "__main__":
+<<<<<<< HEAD
     #print("📈 Aktienkurs:", get_stock_price(["AASL", "GOOGL"]))
     print("📰 Nachrichten:", get_news(["busiess"]))
     #print("🌤️ Wetter:", get_weather(["Stuttgart"]))
@@ -258,3 +310,13 @@ if __name__ == "__main__":
     #print("🚗 Routenzeit:", get_travel_time("driving-car", "Stuttgart", "Hamburg"))
     #print("🏨 Hotels:", get_hotels("Stuttgart", "2025-05-10", "2025-05-12"))
     #print("✈️ Flugstatus:", get_flights("Stuttgart", "London", "2025-05-10", "2025-05-15"))
+=======
+    #print("📈 1: Aktienkurs:", get_stock_price(["AAL", "GOOGL"]))
+    #print("📰 2: Nachrichten:", get_news(["business"]))
+    #print("🌤️ 3: Wetter:", get_weather(["Stuttgart"]))
+    print("🍽️ 4: Mensa:", get_meals_by_name_and_date("mensa central stuttgart", "2025-04-09"))
+    #print("📅 5: Stundenplan:", get_rapla_scedule("doelker%40verwaltung.ba-stuttgart.de", "2025SS"))
+    #print("🚗 6: Routenzeit:", get_travel_time("driving-car", "Stuttgart", "Hamburg"))
+    #print("🏨 7: Hotels:", get_hotels("Stuttgart", "2025-05-10", "2025-05-12"))
+    #print("✈️ 8: Flugstatus:", get_flights("Stuttgart", "London", "2025-05-10", "2025-05-15"))
+>>>>>>> e3722d7c11294678e60c0f8ec9bab160ebc3f289
