@@ -1,54 +1,18 @@
 import datetime
 
-from telegram import Update
+
 from telegram.ext import (
     Application,
     CommandHandler,
     MessageHandler,
     CallbackQueryHandler,
     ConversationHandler,
-    ContextTypes,
     filters,
 )
 from dotenv import load_dotenv
 
 # Importiere alle Command Handler
-from command_handlers import (
-    start_initialization,
-    initialize_course,
-    initialize_cafeteria,
-    initialize_city,
-    initialize_transport,
-    initialize_stocks,
-    initialize_news,
-    start_change_preferences,
-    process_preference_button_click,
-    change_course,
-    change_cafeteria,
-    change_city,
-    change_transport,
-    remove_stocks,
-    add_stocks,
-    remove_news,
-    add_news,
-    show_preferences,
-    COURSE,
-    CAFETERIA,
-    CITY,
-    TRANSPORT,
-    STOCKS,
-    NEWS,
-    BUTTON,
-    COURSE_UPDATE,
-    CAFETERIA_UPDATE,
-    CITY_UPDATE,
-    TRANSPORT_UPDATE,
-    STOCKS_DELETE,
-    STOCKS_ADD,
-    NEWS_DELETE,
-    NEWS_ADD,
-    BUTTON
-)
+from command_handlers import *
 from message_handlers import (
     send_morning_message,
     send_proactivity_message,
