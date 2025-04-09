@@ -1,6 +1,8 @@
 import sys
 import os
 from typing import Dict, List, Optional
+from datetime import datetime, timedelta, timezone
+import traceback
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from llm_fetchers.UseCaseProcessor import UseCaseProcessor
@@ -62,7 +64,7 @@ class AnswerProcessor:
             'Departure Date': '2025-05-05',
             'Return Date': '2025-05-27'
         }
-        return default_values.get(key, 'Unknown')
+        return default_values.get(key, None)
 
     async def __fill_missing_values(self, data: Dict[str, str], user_id) -> Dict[str, str]:
         """
@@ -71,7 +73,7 @@ class AnswerProcessor:
         for key in data.keys():
             if data[key] == [""] or data[key] == "":
                 if key in ['Stocks', 'News Services', 'City', 'Cafeteria Name', 'Course Name', 'Transport Medium', 'Start_Airpot', 'Start_Location']:
-                    data[key] = await self.__fetch_from_database(key, user_id) or 'Unknown'
+                    data[key] = await self.__fetch_from_database(key, user_id) or None
                 else:
                     data[key] = self.__get_default_value(key)
         return data
@@ -125,12 +127,52 @@ class AnswerProcessor:
         response = use_case_processor.response(message, api_data)
         return {"response": response}
     
+    def __get_stocks_with_significant_change(self, stocks):
+        """
+        Returns stocks with significant changes (greater than 1€).
+        """
+        significant_stocks = []
+        for symbol, data in stocks.items():
+            change1hour = data.get("change1hour", 0)
+            if change1hour:
+                if abs(float(data.get("change1hour", 0))) > 1:
+                    significant_stocks.append(data)
+        return significant_stocks
+    
+    def __is_within_last_hour(self, timestamp_str: str) -> bool:
+        timestamp = datetime.strptime(timestamp_str, "%Y-%m-%dT%H:%M:%SZ")
+        timestamp = timestamp.replace(tzinfo=timezone.utc)
+        now = datetime.now(timezone.utc)
+        time_diff = now - timestamp
+        return timedelta(0) <= time_diff < timedelta(hours=1)
+
+    def __get_newest_news(self, news):
+        """
+        Returns the most recent news articles.
+        """
+        newest_news = []
+        for topic, article in news.items():
+            if article:
+                if self.__is_within_last_hour(article[0].get("publishedAt", "")):
+                    newest_news.append(article[0])
+        return newest_news
+
     async def __get_user_proactivity(self,user_id):
         use_case_processor = UseCaseProcessor()
         use_cases = [UseCases.STOCKS.value, UseCases.NEWS.value]
         api_data = await self.__get_api_data_without_gpt(use_cases, user_id)
-        message = "Stell dir vor du kommst proaktiv auf mich zu und erzählst mir etwas Neues über meine Aktien oder News. Beginne mit Hey"
-        response = use_case_processor.response(message, api_data)
+        stocks = api_data[UseCases.STOCKS.description]
+        news = api_data[UseCases.NEWS.description]
+        significant_stocks = self.__get_stocks_with_significant_change(stocks)
+        new_news = self.__get_newest_news(news)
+
+        response = None
+        message = None
+
+        if significant_stocks or new_news:
+            message = "Stell dir vor du bist proaktiv und erzählst mir etwas Neues über meine Aktien oder News. Erwähne bei den Aktien, wie sie sich in der letzten Stunde verändert haben. Beginne mit Hey, hast du schon gehört?"
+            response = use_case_processor.response(message, api_data)
+
         return {"response": response}
     
     async def get_answer(self,message,user_id):
@@ -175,8 +217,7 @@ class AnswerProcessor:
             except Exception as e:
                 results.append({
                     "user_id": str(user_id),
-                    "response": f"Fehler: {str(e)}"
+                    "response": f"Fehler: {str(e)}\nTraceback:\n{traceback.format_exc()}"
                 })
 
         return {"results": results}
-

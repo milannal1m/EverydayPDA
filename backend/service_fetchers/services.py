@@ -1,7 +1,7 @@
 import requests
 import os
 from dotenv import load_dotenv
-#from geopy.geocoders import Nominatim # INSTALLIEREN!!!
+from geopy.geocoders import Nominatim # INSTALLIEREN!!!
 import time
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))

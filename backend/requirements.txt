@@ -1,6 +1,6 @@
 uvicorn
 fastapi
-psycopg2
+psycopg2-binary
 asyncpg
 httpx
 requests
