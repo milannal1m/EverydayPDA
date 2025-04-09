@@ -5,7 +5,7 @@ import sys
 from datetime import datetime, timezone, timedelta
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from AnswerProcessor import AnswerProcessor, UseCases
+from answer_processor import AnswerProcessor, UseCases
 
 
 class TestAnswerProcessor(unittest.IsolatedAsyncioTestCase):
@@ -13,8 +13,8 @@ class TestAnswerProcessor(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.processor = AnswerProcessor()
 
-    @patch("AnswerProcessor.get_db_connection", new_callable=AsyncMock)
-    @patch("AnswerProcessor.UseCaseProcessor")
+    @patch("answer_processor.get_db_connection", new_callable=AsyncMock)
+    @patch("answer_processor.UseCaseProcessor")
     async def test_get_answer(self, mock_usecase_proc_class, mock_get_db):
         # Setup mock for UseCaseProcessor
         mock_proc = MagicMock()
@@ -40,7 +40,7 @@ class TestAnswerProcessor(unittest.IsolatedAsyncioTestCase):
             "milan"
         )
 
-    @patch('AnswerProcessor.get_db_connection')  # Mock der Datenbankverbindung
+    @patch('answer_processor.get_db_connection')  # Mock der Datenbankverbindung
     async def test_get_morning(self, mock_get_db_connection):
         # Mock der Rückgabe der fetch Methode der Datenbankverbindung (Benutzer abfragen)
         mock_db_connection = AsyncMock()
@@ -71,11 +71,9 @@ class TestAnswerProcessor(unittest.IsolatedAsyncioTestCase):
                 # Überprüfe, ob die user_id richtig ist
                 self.assertIn('user_id', user_result)
                 self.assertIn(user_result['user_id'], ['user1', 'user2'])
-                
-                # Überprüfe, ob die response mit "Guten Morgen" beginnt
                 self.assertTrue(user_result['response'].startswith("Guten Morgen"))
 
-    @patch('AnswerProcessor.get_db_connection')  # Mock der Datenbankverbindung
+    @patch('answer_processor.get_db_connection')  # Mock der Datenbankverbindung
     async def test_get_morning_with_no_users(self, mock_get_db_connection):
         # Mock der Rückgabe der fetch Methode der Datenbankverbindung (Keine Benutzer)
         mock_db_connection = AsyncMock()
@@ -100,7 +98,7 @@ class TestAnswerProcessor(unittest.IsolatedAsyncioTestCase):
 
         timestamp = (datetime.now(timezone.utc) - timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%SZ")
         mock_get_api_data.return_value = {
-            'Stock Market Information': {'AAL': {'price': '9.080000', 'datetime': '2025-04-08 15:59:00', 'change1hour': '0.0012998581'}, 'AAPL': {'price': '172.77000', 'datetime': '2025-04-08 15:59:00', 'change1hour': '-0.11999512'}}
+            'Stock Market Information': {'AAL': {'price': '9.080000', 'datetime': '2025-04-08 15:59:00', 'change1hour': '1.1'}, 'AAPL': {'price': '172.77000', 'datetime': '2025-04-08 15:59:00', 'change1hour': '-0.11999512'}}
             , 'Latest News Updates': {'Technology': [{'title': 'Google Releases Android Update to Patch Two Actively Exploited Vulnerabilities - The Hacker News', 'source': 'https://thehackernews.com/2025/04/google-releases-android-update-to-patch.html', 'publishedAt': f"{timestamp}"}]}
             }
 
@@ -144,7 +142,7 @@ class TestAnswerProcessor(unittest.IsolatedAsyncioTestCase):
         result = await self.processor.get_proactivity()
 
         # Assert
-        self.assertIn("Fehler: API failed", result["results"][0]["response"])
+        self.assertIn("Error: API failed", result["results"][0]["response"])
 
 
 if __name__ == '__main__':

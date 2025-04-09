@@ -8,6 +8,9 @@ from api.database import get_db_connection
 from api.models import User, UserUpdate
 
 async def init_user_preferences(user: User):
+    """
+    Initialize user preferences by inserting user data into the database.
+    """
     conn = await get_db_connection()
     async with conn.transaction():
         check_query = "SELECT COUNT(*) FROM users WHERE username = $1"
@@ -43,6 +46,9 @@ async def init_user_preferences(user: User):
     return {"message": "User created successfully", "user_id": user_id}
 
 async def get_user_preferences(username: str) -> Optional[User]:
+    """
+    Retrieve user preferences from the database.
+    """
     conn = await get_db_connection()
     
     query = """
@@ -82,7 +88,9 @@ async def get_user_preferences(username: str) -> Optional[User]:
 
 
 async def __update_list_preferences(conn, user_id, items, table, id_column, name_column, link_table, link_column):
-    """Fügt Elemente hinzu oder entfernt sie basierend auf den gegebenen Listen."""
+    """
+    Add or remove items in the user's preferences list.
+    """
     add_items = items.get("add", [])
     delete_items = items.get("delete", [])
     
@@ -98,6 +106,9 @@ async def __update_list_preferences(conn, user_id, items, table, id_column, name
             await conn.execute(f"DELETE FROM {link_table} WHERE u_id = $1 AND {link_column} = (SELECT {id_column} FROM {table} WHERE {name_column} = $2)", user_id, item_name)
 
 async def update_user_preferences(username: str, user: UserUpdate):
+    """
+    Update user preferences in the database.
+    """
     conn = await get_db_connection()
     try:
         async with conn.transaction():
