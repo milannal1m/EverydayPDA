@@ -8,8 +8,6 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 env_path = os.path.join(BASE_DIR, ".env")
 load_dotenv(env_path)
 
-AMADEUS_CLIENT_ID = os.getenv("AMADEUS_CLIENT_ID")
-AMADEUS_CLIENT_SECRET = os.getenv("AMADEUS_CLIENT_SECRET")
 TWELVE_DATA_API_KEY = os.getenv("TWELVE_DATA_API_KEY")
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
@@ -33,7 +31,9 @@ def get_stock_price(symbols):
 
     return stocks
 
+
 # 2. Nachrichten (NewsAPI)
+# Categories: business, entertainment, general, health, science, sports, technology
 def get_news(categories):
     news = {}
 
@@ -54,6 +54,7 @@ def get_news(categories):
             })
     return news
 
+
 # 3. Wetter (WeatherAPI)
 def get_weather(cities):
     weatherCities = {}
@@ -72,6 +73,13 @@ def get_weather(cities):
             } 
                
     return weatherCities
+
+
+
+
+
+
+
 '''
 # 4. Cafeteria (CafeteriaAPI)
 def get_cafeteria_menu(cafeteria_name):
@@ -79,12 +87,18 @@ def get_cafeteria_menu(cafeteria_name):
     response = requests.get(url)
     return response.json()
 
+    
 # 5. Stundenplan (StundenplanAPI)
 def get_timetable(course_name):
     url = f"https://api.stundenplanapi.com/v1/timetable?course={course_name}"
     response = requests.get(url)
     return response.json()
 '''
+
+
+
+
+
 
 # 6. Wegezeitberechnung (OpenRouteService)
 # Transport_Medium: "driving-car", "driving-hgv", "cycling-regular", "cycling-road", "cycling-mountain", "cycling-electric", "foot-walking", "foot-hiking", "wheelchair"
@@ -126,98 +140,106 @@ def get_travel_time(transport_medium, start_location, end_location):
     }
 
 
-# 7. Hotelsuche (Amadeus)
-def get_amadeus_token():
-    url = "https://test.api.amadeus.com/v1/security/oauth2/token"
-    data = {
-        "grant_type": "client_credentials",
-        "client_id": AMADEUS_CLIENT_ID,
-        "client_secret": AMADEUS_CLIENT_SECRET
-    }
-    response = requests.post(url, data=data)
-    return response.json().get("access_token")
-
-def get_city_code(city_name, token): # Ortsname → City Code (z.B. "Stuttgart" → "STR")
-    url = "https://test.api.amadeus.com/v1/reference-data/locations"
-    params = {
-        "keyword": city_name,
-        "subType": "CITY"
-    }
-    headers = {
-        "Authorization": f"Bearer {token}"
-    }
-    response = requests.get(url, headers=headers, params=params)
-    results = response.json().get("data", [])
-    #print("City Code:", results) # Debug-Ausgabe
-    if results:
-        return results[0]["iataCode"]
-    return None
-
-def get_city_hotels(city_code, token):
-    url = f"https://test.api.amadeus.com/v1/reference-data/locations/hotels/by-city"
-    headers = {"Authorization": f"Bearer {token}"}
-    params = {
-        "cityCode": city_code,
-        "radius": 20,
-        "radiusUnit": "KM"
-    }
-
-    response = requests.get(url, headers=headers, params=params)
-    data = response.json()
-    hotel_ids = [hotel["hotelId"] for hotel in data.get("data", [])[:5]]  # max. 5 Hotels
-    return hotel_ids
-
+# 7. Hotelsuche (Hotellook)
 def get_hotels(city, check_in, check_out):
-    token = get_amadeus_token()
-    city_code = get_city_code(city, token)
-    if not city_code:
-        return {"error": "Ungültiger Ort"}
 
-    hotel_ids = get_city_hotels(city_code, token)
-    if not hotel_ids:
-        return {"error": "Keine Hotels gefunden"}
+    location = city
+    limit=5
 
-    url = "https://test.api.amadeus.com/v3/shopping/hotel-offers"
-    headers = {"Authorization": f"Bearer {token}"}
+    url = "https://engine.hotellook.com/api/v2/cache.json"
     params = {
-        "hotelIds": ",".join(hotel_ids),
-        "checkInDate": check_in,
-        "checkOutDate": check_out,
-        "adults": 1,
-        "currency": "EUR"
+        "location": location,
+        "currency": "eur",
+        "checkIn": check_in,
+        "checkOut": check_out,
+        "limit": limit
     }
 
-    response = requests.get(url, headers=headers, params=params)
+    response = requests.get(url, params=params)
     if response.status_code != 200:
         return {"error": f"API-Fehler: {response.status_code} - {response.text}"}
 
     data = response.json()
     hotels = []
-    for item in data.get("data", []):
-        hotel_info = item.get("hotel", {})
-        offer_info = item.get("offers", [{}])[0]
-        price_info = offer_info.get("price", {})
 
+    for item in data:
         hotels.append({
-            "name": hotel_info.get("name", "Unbekannt"),
-            "price": price_info.get("total", "k.A."),
-            "rating": hotel_info.get("rating", "k.A.")
+            "name": item.get("hotelName", "Unbekannt"),
+            "price": item.get("priceFrom", "k.A."),
+            "stars": item.get("stars", "k.A.")
         })
 
     return hotels
 
-'''
+
 # 8. Fluginformationen (AviationStack)
-def get_flight_status(destination):
-    url = f"http://api.aviationstack.com/v1/flights?access_key={AVIATION_STACK_API_KEY}&arr_iata=STR"
-    response = requests.get(url)
-    return response.json()
-'''
+def get_iata_code(city_name):
+    # API-Endpunkt für die Flughafensuche
+    url = f"https://api.aviationstack.com/v1/airports"
+    params = {
+        "access_key": AVIATION_STACK_API_KEY,
+        "city": city_name
+    }
+    
+    response = requests.get(url, params=params)
+    
+    if response.status_code != 200:
+        return None
+    
+    data = response.json()
+    if not data.get("data"):
+        return None
+    
+    # Der erste Treffer (meistens der Hauptflughafen der Stadt)
+    airport = data["data"][0]
+    return airport.get("iata_code", None)
+
+def get_flights(origin_city, destination_city, departure_date, return_date):
+    max_results = 3
+    origin_iata = get_iata_code(origin_city)
+    destination_iata = get_iata_code(destination_city)
+    
+    if not origin_iata or not destination_iata:
+        return {"error": "Ungültige Stadt/Flughafen eingegeben."}
+    
+    # API-Endpunkt für Fluginformationen
+    url = "https://api.aviationstack.com/v1/flights"
+    params = {
+        "access_key": AVIATION_STACK_API_KEY,
+        "departure_iata": origin_iata,     # IATA-Code des Abreiseorts
+        "arrival_iata": destination_iata,  # IATA-Code des Zielorts
+        "departure_date": departure_date,  # Format: "YYYY-MM-DD"
+        "return_date": return_date         # Format: "YYYY-MM-DD" (optional)
+    }
+
+    response = requests.get(url, params=params)
+    
+    if response.status_code != 200:
+        return {"error": f"API-Fehler: {response.status_code} - {response.text}"}
+
+    data = response.json()
+    if not data.get("data"):
+        return {"error": "Keine Flüge gefunden."}
+
+    flights = []
+    for flight in data["data"][:max_results]:  # Nur die ersten 'max_results' Flüge
+        flights.append({
+            "flight_name": flight.get("flight", {}).get("iata", "Unbekannt"),
+            "departure": flight.get("departure", {}).get("estimated", "k.A."),
+            "arrival": flight.get("arrival", {}).get("estimated", "k.A."),
+            "price": flight.get("price", {}).get("total", "k.A.")  # Falls verfügbar
+        })
+
+    return flights
+
+
 # --- Testaufrufe ---
 if __name__ == "__main__":
     print("📈 Aktienkurs:", get_stock_price(["AAL", "GOOGL"]))
-    print("📰 Nachrichten:", get_news(["economy"]))
+    print("📰 Nachrichten:", get_news(["business"]))
     print("🌤️ Wetter:", get_weather(["Stuttgart"]))
-    print("🚗 Routenzeit:", get_travel_time("foot-walking", "Stuttgart", "Hamburg"))
-    print("🏨 Hotels:", get_hotels("Berlin", "2025-05-10", "2025-05-12"))
-    #print("✈️ Flugstatus:", get_flight_status())
+    #print("🍽️ Mensa:", get_cafeteria_menu("Mensa Stuttgart"))
+    #print("📅 Stundenplan:", get_timetable("IN22"))
+    print("🚗 Routenzeit:", get_travel_time("driving-car", "Stuttgart", "Hamburg"))
+    print("🏨 Hotels:", get_hotels("Stuttgart", "2025-05-10", "2025-05-12"))
+    print("✈️ Flugstatus:", get_flights("Stuttgart", "London", "2025-05-10", "2025-05-15"))
