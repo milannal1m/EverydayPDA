@@ -5,7 +5,7 @@ def placeholder(*args, **kwargs):
     raise NotImplementedError("Diese Funktion ist noch nicht implementiert.")
 
 class UseCases(Enum):
-    STOCKS = (1, "Stock Market Information", ["Stocks"], get_stock_price)
+    STOCKS = (1, "Stock Market Information", ["Company Name"], get_stock_price) # ÄNDERUNG INPUT: TICKER-SYMBOL => COMPANY NAME
     NEWS = (2, "Latest News Updates", ["News Services"], get_news)
     WEATHER = (3, "Weather Forecasts", ["City"], get_weather)
     CAFETERIA = (4, "Cafeteria Menu", ["Cafeteria Name"], get_mensa_info)

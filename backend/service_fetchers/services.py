@@ -15,30 +15,54 @@ WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
 OPENROUTE_API_KEY = os.getenv("OPENROUTE_API_KEY")
 AVIATION_STACK_API_KEY = os.getenv("AVIATION_STACK_API_KEY")
 
-# 1. Aktien (Twelve Data)
-def get_stock_price(symbols):
+# 1. Stocks (Twelve Data)
+# Retrieves current stock prices using company names.
+# Input: names (list of str) – company names (e.g., "Apple", "Google")
+# Output: dict – contains price, datetime, and hourly change per company
+def get_stock_price(names):
     stocks = {}
 
-    for symbol in symbols:
-        url = f"https://api.twelvedata.com/time_series?symbol={symbol}&interval=1min&apikey={TWELVE_DATA_API_KEY}"
+    for name in names:
+        # Lookup ticker symbol by company name
+        search_url = (
+            f"https://api.twelvedata.com/symbol_search?symbol={name}&apikey={TWELVE_DATA_API_KEY}"
+        )
+        response = requests.get(search_url)
+        data = response.json()
+
+        if not data.get("data"):
+            continue  # Skip if no match found
+
+        symbol = data["data"][0].get("symbol")
+
+        # Get latest 1min time series
+        url = (
+            f"https://api.twelvedata.com/time_series"
+            f"?symbol={symbol}&interval=1min&apikey={TWELVE_DATA_API_KEY}"
+        )
         response = requests.get(url)
         stock = response.json()
 
-        url = f"https://api.twelvedata.com/quote?symbol={symbol}&interval=1h&apikey={TWELVE_DATA_API_KEY}"
+        # Get quote with hourly change
+        url = (
+            f"https://api.twelvedata.com/quote"
+            f"?symbol={symbol}&interval=1h&apikey={TWELVE_DATA_API_KEY}"
+        )
         response = requests.get(url)
         stock.update(response.json())
 
         if response.json().get("code") == 400:
-            stocks = {}
+            continue
         else:
-            # Filters out the stocks symbol, price and datetime
-            stocks[symbol] = {
+            # Filters symbol, price, and timestamp
+            stocks[name] = {
                 "price": stock.get("values", [{}])[0].get("close"),
                 "datetime": stock.get("values", [{}])[0].get("datetime"),
-                "changeFrom1hour": stock.get("change")
+                "changeFrom1hour": stock.get("change"),
             }
 
     return stocks
+
 
 
 # 2. Nachrichten (NewsAPI)
@@ -294,11 +318,11 @@ def get_flights(origin_city, destination_city, departure_date, return_date):
 
 # --- Testaufrufe ---
 if __name__ == "__main__":
-    #print("📈 1: Aktienkurs:", get_stock_price(["INVALID"]))
+    #print("📈 1: Aktienkurs:", get_stock_price(["Apple", "Google"]))
     #print("📰 2: Nachrichten:", get_news(["business"]))
     #print("🌤️ 3: Wetter:", get_weather(["Invalid"]))
-    #print("🍽️ 4: Mensa:", get_meals_by_name_and_date("mensa ludwigsburg, ludwigsburg", "2025-04-09"))
+    #print("🍽️ 4: Mensa:", get_mensa_info("mensa ludwigsburg, ludwigsburg", "2025-04-09"))
     #print("📅 5: Stundenplan:", get_rapla_scedule("doelker%40verwaltung.ba-stuttgart.de", "2025SS"))
     #print("🚗 6: Routenzeit:", get_travel_time("driving-car", "Stuttgart", "Hamburg"))
-    print("🏨 7: Hotels:", get_hotels("Berlin", "25-05-10", "2025-05-12"))
+    #print("🏨 7: Hotels:", get_hotels("Berlin", "25-05-10", "2025-05-12"))
     #print("✈️ 8: Flugstatus:", get_flights("Stuttgart", "London", "2025-05-10", "2025-05-15"))
