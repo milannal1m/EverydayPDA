@@ -23,7 +23,7 @@ class PreferenceHandler:
         if status == "success":
             summary = (f"Hier ist deine Übersicht:\n\n"
             f"📚 Kurs: {prefs['course']}\n"
-            f"🍽️ Mensa: {prefs['canteen']}\n"
+            f"🍽️ Mensa: {prefs['cafeteria']}\n"
             f"🏠 Wohnort: {prefs['city']}\n"
             f"🚆 Transport: {prefs['preferred_transport_medium']}\n"
             f"📈 Lieblingsaktien: {', '.join(prefs['stocks'])}\n"
@@ -70,7 +70,7 @@ class PreferenceHandler:
 
     async def change_canteen(self, update: Update, context: CallbackContext):
         new_canteen = update.message.text.strip()
-        response = api_client.put_preference(update.effective_user.id, "canteen", new_canteen)
+        response = api_client.put_preference(update.effective_user.id, "cafeteria", new_canteen)
         await update.message.reply_text(response)
         return ConversationHandler.END
 
