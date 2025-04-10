@@ -74,26 +74,22 @@ def get_weather(cities):
     weatherCities = {}
 
     for city in cities:
-        url = f"http://api.weatherapi.com/v1/current.json&/forecast.json ?key={WEATHER_API_KEY}&q={city}"
+        url = f"http://api.weatherapi.com/v1/current.json&/forecast.json?key={WEATHER_API_KEY}&q={city}"
         response = requests.get(url)
         condition = response.json()
 
-        # Filters out the locations name, temperature and feelslike temperature
-        weatherCities[city] = {
-                "temperature": condition.get("current", {}).get("temp_c"),
-                "feelslike": condition.get("current", {}).get("feelslike_c"),
-                "max_temp": condition.get("forecast", {}).get("forecastday", [{}])[0].get("day", {}).get("maxtemp_c"),
-                "min_temp": condition.get("forecast", {}).get("forecastday", [{}])[0].get("day", {}).get("mintemp_c"),
-            } 
+        if response.json().get("error", {}).get("message") == "No matching location found.":
+            weatherCities = {}
+        else:
+            # Filters out the locations name, temperature and feelslike temperature
+            weatherCities[city] = {
+                    "temperature": condition.get("current", {}).get("temp_c"),
+                    "feelslike": condition.get("current", {}).get("feelslike_c"),
+                    "max_temp": condition.get("forecast", {}).get("forecastday", [{}])[0].get("day", {}).get("maxtemp_c"),
+                    "min_temp": condition.get("forecast", {}).get("forecastday", [{}])[0].get("day", {}).get("mintemp_c"),
+                } 
                
     return weatherCities
-
-
-
-
-
-
-
 
 # 4. Cafeteria (CafeteriaAPI)
 def get_canteen_id_by_fuzzy_name(name_query, min_ratio=0.6):
@@ -109,6 +105,8 @@ def get_canteen_id_by_fuzzy_name(name_query, min_ratio=0.6):
         canteens = response.json()
         if not canteens:
             break
+
+        print(canteens)
 
         for canteen in canteens:
             full_name = f"{canteen.get('name', '')} {canteen.get('city', '')}"
@@ -130,13 +128,23 @@ def get_meals_by_name_and_date(canteen_name, date):
     if not canteen_id:
         return {"error": "Kantine nicht gefunden."}
 
+    meals = {}
+
     url = f"https://openmensa.org/api/v2/canteens/{canteen_id}/days/{date}/meals"
     response = requests.get(url)
 
     if response.status_code != 200:
         return {"error": f"Fehler beim Abrufen: {response.status_code}"}
 
-    return response.json()
+    meal_data = response.json()
+
+    for meal in meal_data:
+        meals[meal.get("name")] = {
+            "category": meal.get("category"),
+            "price": meal.get("prices", {}).get("students"),
+        }
+
+    return meals
 
 
     
@@ -146,10 +154,6 @@ def get_rapla_scedule(user_id, semester):
     response = requests.get(url)
     
     return response.json()
-
-
-
-
 
 
 
@@ -288,11 +292,11 @@ def get_flights(origin_city, destination_city, departure_date, return_date):
 
 # --- Testaufrufe ---
 if __name__ == "__main__":
-    #print("📈 1: Aktienkurs:", get_stock_price(["AAL", "GOOGL"]))
-    #print("📰 2: Nachrichten:", get_news(["busness"]))
-    #print("🌤️ 3: Wetter:", get_weather(["Stuttgart"]))
-    #print("🍽️ 4: Mensa:", get_meals_by_name_and_date("mensa central stuttgart", "2025-04-09"))
-    print("📅 5: Stundenplan:", get_rapla_scedule("doelker%40verwaltung.ba-stuttgart.de", "2025SS"))
+    #print("📈 1: Aktienkurs:", get_stock_price(["INVALID"]))
+    #print("📰 2: Nachrichten:", get_news(["business"]))
+    #print("🌤️ 3: Wetter:", get_weather(["Invalid"]))
+    print("🍽️ 4: Mensa:", get_meals_by_name_and_date("mensa ludwigsburg, ludwigsburg", "2025-04-09"))
+    #print("📅 5: Stundenplan:", get_rapla_scedule("doelker%40verwaltung.ba-stuttgart.de", "2025SS"))
     #print("🚗 6: Routenzeit:", get_travel_time("driving-car", "Stuttgart", "Hamburg"))
     #print("🏨 7: Hotels:", get_hotels("Stuttgart", "2025-05-10", "2025-05-12"))
     #print("✈️ 8: Flugstatus:", get_flights("Stuttgart", "London", "2025-05-10", "2025-05-15"))
