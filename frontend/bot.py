@@ -3,16 +3,12 @@ import datetime
 
 from telegram.ext import (
     Application,
-    CommandHandler,
     MessageHandler,
-    CallbackQueryHandler,
-    ConversationHandler,
     filters,
 )
-from dotenv import load_dotenv
 
 # Importiere alle Command Handler
-from command_handlers import *
+from command_handlers import configure_conversation_handlers
 from message_handlers import (
     send_morning_message,
     send_proactivity_message,
@@ -30,39 +26,10 @@ class BotApp:
         self._configure_jobs()
 
     def _configure_handlers(self):
-        init_handler = ConversationHandler(
-            entry_points=[CommandHandler("start", start_initialization)],
-            states={
-                COURSE: [MessageHandler(filters.TEXT & ~filters.COMMAND, initialize_course)],
-                CAFETERIA: [MessageHandler(filters.TEXT & ~filters.COMMAND, initialize_cafeteria)],
-                CITY: [MessageHandler(filters.TEXT & ~filters.COMMAND, initialize_city)],
-                TRANSPORT: [ CallbackQueryHandler(initialize_transport, pattern=r"^transport:")],
-                STOCKS: [MessageHandler(filters.TEXT & ~filters.COMMAND, initialize_stocks)],
-                NEWS: [CallbackQueryHandler(initialize_news, pattern=r"^news:")],
-            },
-            fallbacks=[]
-        )
-        update_handler = ConversationHandler(
-            entry_points=[CommandHandler("changepref", start_change_preferences)],
-            states={
-                BUTTON: [CallbackQueryHandler(process_preference_button_click)],
-                COURSE_UPDATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, change_course)],
-                CAFETERIA_UPDATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, change_cafeteria)],
-                CITY_UPDATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, change_city)],
-                TRANSPORT_UPDATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, change_transport)],
-                STOCKS_DELETE: [MessageHandler(filters.TEXT & ~filters.COMMAND, remove_stocks)],
-                STOCKS_ADD: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_stocks)],
-                NEWS_DELETE: [MessageHandler(filters.TEXT & ~filters.COMMAND, remove_news)],
-                NEWS_ADD: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_news)],
-            },
-            fallbacks=[]
-        )
-        self.application.add_handler(init_handler)
-        self.application.add_handler(update_handler)
+        configure_conversation_handlers(self.application)
         self.application.add_handler(
             MessageHandler((filters.TEXT & ~filters.COMMAND) | filters.VOICE, handle_incoming_message)
         )
-        self.application.add_handler(CommandHandler("showpref", show_preferences))
 
     def _configure_jobs(self):
         self.application.job_queue.run_daily(
