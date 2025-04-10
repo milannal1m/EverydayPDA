@@ -82,13 +82,13 @@ def get_stock_price(stock_names):
 #     - "title" (str): Headline of the article
 #     - "source" (str): URL of the article
 #     - "publishedAt" (str): Publication datetime in ISO format
-def get_news(categories):
+def get_news(news_topics):
     news = {}
 
-    for category in categories:
+    for news_topic in news_topics:
         url = (
             f"https://newsapi.org/v2/top-headlines"
-            f"?category={category}&pageSize=1&apiKey={NEWS_API_KEY}"
+            f"?category={news_topic}&pageSize=1&apiKey={NEWS_API_KEY}"
         )
         response = requests.get(url)
         articles = response.json().get("articles", [])
@@ -96,12 +96,12 @@ def get_news(categories):
         if response.json().get("totalResults") == 0:
             continue
 
-        if category not in news:
-            news[category] = []
+        if news_topic not in news:
+            news[news_topic] = []
 
         # Extracts article title, URL, and publication date
         for article in articles:
-            news[category].append({
+            news[news_topic].append({
                 "title": article.get("title"),
                 "source": article.get("url"),
                 "publishedAt": article.get("publishedAt"),
@@ -153,7 +153,7 @@ def get_weather(cities):
     return weather_cities
 
 
-# 4. Mensa Info (OpenMensa API)
+# 4. Canteen Info (OpenMensa API)
 #
 # Parameters:
 # - canteen_name (str): Approximate name of the canteen (e.g., "Mensa Stuttgart")
@@ -164,7 +164,9 @@ def get_weather(cities):
 #     - "category" (str): Meal category (e.g., "Vegetarian", "Main dish")
 #     - "price" (float or None): Price for students in EUR
 #   Returns error message if the canteen is not found or request fails.
-def get_mensa_info(canteen_name, min_ratio=0.6):
+def get_canteen_info(canteen_names):
+    min_ratio = 0.6
+
     # Helper function for normalizing names (lowercase and removing special characters)
     def normalize_name(name):
         name = name.lower()
@@ -213,55 +215,76 @@ def get_mensa_info(canteen_name, min_ratio=0.6):
 
         page += 1
 
-    # Normalize the input canteen name for better matching
-    normalized_input = normalize_name(canteen_name)
+    # Prepare the result for each canteen name in the input list
+    all_menus = {}
 
-    # Find the best match based on the weighted matching
-    canteen_id = weighted_match(normalized_input, candidates, min_ratio)
+    for canteen_name in canteen_names:
+        normalized_input = normalize_name(canteen_name)
 
-    print(f"Best match for '{canteen_name}': {canteen_id}") # DEBUGGING
+        # Find the best match based on the weighted matching
+        canteen_id = weighted_match(normalized_input, candidates, min_ratio)
 
-    if not canteen_id:
-        return {"error": "Kantine nicht gefunden."}
+        #print(f"Best match for '{canteen_name}': {canteen_id}")  # DEBUGGING
 
-    date = time.strftime("%Y-%m-%d")  # Todays date with format YYYY-MM-DD
+        if not canteen_id:
+            all_menus[canteen_name] = {"error": "Kantine nicht gefunden."}
+            continue
 
-    url = f"https://openmensa.org/api/v2/canteens/{canteen_id}/days/{date}/meals"
-    response = requests.get(url)
+        date = time.strftime("%Y-%m-%d")  # Todays date with format YYYY-MM-DD
 
-    if response.status_code != 200:
-        return {"error": f"Fehler beim Abrufen: {response.status_code}"}
+        url = f"https://openmensa.org/api/v2/canteens/{canteen_id}/days/{date}/meals"
+        response = requests.get(url)
 
-    meals = {}
-    for meal in response.json():
-        meals[meal.get("name")] = {
-            "category": meal.get("category"),
-            "price": meal.get("prices", {}).get("students"),
-        }
+        if response.status_code != 200:
+            all_menus[canteen_name] = {"error": f"Fehler beim Abrufen: {response.status_code}"}
+            continue
 
-    return meals
+        meals = {}
+        for idx, meal in enumerate(response.json()):
+            if idx >= 3:  # Stop after the first 3 meals
+                break
+            meals[meal.get("name")] = {
+                "category": meal.get("category"),
+                "price": meal.get("prices", {}).get("students"),
+            }
+
+        all_menus[canteen_name] = meals
+
+    return all_menus
 
 
-
-    
-#5. Stundenplan (StundenplanAPI)
-def get_rapla_schedule(date):
-    url = f"http://rapla.satoqz.net/rapla/internal_calendar?key=6Q0QSbNtpyeYPKQhnGFTaEN6AggaPdGgCFyhd5ANmjydX8WyDjUfLBh4YjDgat2dJd8as6Az5GGmQilBwJydDTQpeHfV6bTghpX2dlRU6RU5QsAKr6ARjgRj_BxZmmhVA3Tk_bSK4acN3oO7a7PkNAHTfszb0OA4_JMp8zdoYDY&salt=648736798"
+# 5. Schedule (Rapla API)
+#
+# Parameters:
+# - dates (list of str): List of dates (in "YYYY-MM-DD" format) for which to retrieve events
+#
+# Returns:
+# - dict: Maps each event summary to a dictionary containing:
+#     - "start" (str): Event start time in "HH:MM" format
+#     - "end" (str): Event end time in "HH:MM" format
+#     - "location" (str): Event location
+def get_rapla_schedule(dates):
+    url = (
+        "http://rapla.satoqz.net/rapla/internal_calendar?"
+        "key=6Q0QSbNtpyeYPKQhnGFTaEN6AggaPdGgCFyhd5ANmjydX8WyDjUfLBh4YjDgat2dJd8as6Az5GGmQilBwJydDTQpeHfV6bTghpX2dlRU6RU5QsAKr6ARjgRj_BxZmmhVA3Tk_bSK4acN3oO7a7PkNAHTfszb0OA4_JMp8zdoYDY"
+        "&salt=648736798"
+    )
     response = requests.get(url)
 
     ics_file = response.text
 
     current_event = {}
     events = {}
-    
-    # Goes through all lines of the given ics file
 
-    for line in ics_file.splitlines():
+    # Iterates through all lines of the given ICS file
+    for date in dates:
+        for line in ics_file.splitlines():
             line = line.strip()
-            if line.startswith("BEGIN:VEVENT"): # Looks where an event begins
+
+            if line.startswith("BEGIN:VEVENT"):
                 current_event = {}
 
-            elif line.startswith("DTSTAMP:"): # Looks for the current date of the event and formats it to YYYY-MM-DD
+            elif line.startswith("DTSTAMP:"):
                 timestamp = line.replace("DTSTAMP:", "").strip().split("T")[0]
                 current_event["timestamp"] = f"{timestamp[:4]}-{timestamp[4:6]}-{timestamp[6:]}"
 
@@ -278,9 +301,9 @@ def get_rapla_schedule(date):
 
             elif line.startswith("LOCATION:"):
                 current_event["location"] = line.replace("LOCATION:", "").strip()
-                
-            elif line.startswith("END:VEVENT"): # Looks whrere the event ends
-                if "summary" in current_event and current_event["timestamp"] == date.strip(): # Checks if the current event date is the same as given date
+
+            elif line.startswith("END:VEVENT"):
+                if "summary" in current_event and current_event["timestamp"] == date:
                     events[current_event["summary"]] = {
                         "start": current_event.get("start"),
                         "end": current_event.get("end"),
@@ -288,6 +311,7 @@ def get_rapla_schedule(date):
                     }
 
     return events
+
 
 # 6. Wegezeitberechnung (OpenRouteService)
 # Transport_Medium: "driving-car", "driving-hgv", "cycling-regular", "cycling-road", "cycling-mountain", "cycling-electric", "foot-walking", "foot-hiking", "wheelchair"
@@ -422,11 +446,11 @@ def get_flights(origin_city, destination_city, departure_date, return_date):
 
 # --- Testaufrufe ---
 if __name__ == "__main__":
-    #print("📈 1: Aktienkurs:", get_stock_price(["Siemens AG"]))
-    #print("📰 2: Nachrichten:", get_news(["Health"]))
-    #print("🌤️ 3: Wetter:", get_weather(["Stuttgart"]))
-    print("🍽️ 4: Mensa:", get_mensa_info("Mensa Central"))
-    #print("📅 5: Stundenplan:", get_rapla_scedule("doelker%40verwaltung.ba-stuttgart.de", "2025SS"))
-    #print("🚗 6: Routenzeit:", get_travel_time("driving-car", "Stuttgart", "Hamburg"))
-    #print("🏨 7: Hotels:", get_hotels("Berlin", "2025-05-10", "2025-05-12"))
-    #print("✈️ 8: Flugstatus:", get_flights("Stuttgart", "Hamburg", "2025-05-10", "2025-05-15"))
+    print("📈 1: Aktienkurs:", get_stock_price(["Siemens AG"]))
+    print("📰 2: Nachrichten:", get_news(["business"]))
+    print("🌤️ 3: Wetter:", get_weather(["Stuttgart"]))
+    print("🍽️ 4: Mensa:", get_canteen_info(["Mensa Central"]))
+    print("📅 5: Stundenplan:", get_rapla_schedule(["2025-04-15"]))
+    print("🚗 6: Routenzeit:", get_travel_time("driving-car", "Stuttgart", "Hamburg"))
+    print("🏨 7: Hotels:", get_hotels("Berlin", "2025-05-10", "2025-05-12"))
+    print("✈️ 8: Flugstatus:", get_flights("Stuttgart", "Hamburg", "2025-05-10", "2025-05-15"))
