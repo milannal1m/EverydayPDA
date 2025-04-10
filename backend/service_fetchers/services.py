@@ -17,24 +17,25 @@ AVIATION_STACK_API_KEY = os.getenv("AVIATION_STACK_API_KEY")
 
 # 1. Stocks (Twelve Data)
 # Retrieves current stock prices using company names.
-# Input: names (list of str) – company names (e.g., "Apple", "Google")
+# Input: stock_names (list of str) – company names (e.g., "Apple", "Google")
 # Output: dict – contains price, datetime, and hourly change per company
-def get_stock_price(names):
+def get_stock_price(stock_names):
     stocks = {}
 
-    for name in names:
+    for stock_name in stock_names:
         # Lookup ticker symbol by company name
         search_url = (
-            f"https://api.twelvedata.com/symbol_search?symbol={name}&apikey={TWELVE_DATA_API_KEY}"
+            f"https://api.twelvedata.com/symbol_search?symbol={stock_name}&apikey={TWELVE_DATA_API_KEY}"
         )
         response = requests.get(search_url)
         data = response.json()
-
 
         if not data.get("data"):
             continue  # Skip if no match found
 
         symbol = data["data"][0].get("symbol")
+
+        print(f"Symbol: {symbol}")
 
         # Get latest 1min time series
         url = (
@@ -44,8 +45,6 @@ def get_stock_price(names):
         response = requests.get(url)
         stock = response.json()
 
-        print(response.json())
-
         # Get quote with hourly change
         url = (
             f"https://api.twelvedata.com/quote"
@@ -54,13 +53,11 @@ def get_stock_price(names):
         response = requests.get(url)
         stock.update(response.json())
 
-
-
         if response.json().get("code") == 400:
             continue
         else:
             # Filters symbol, price, and timestamp
-            stocks[name] = {
+            stocks[stock_name] = {
                 "price": stock.get("values", [{}])[0].get("close"),
                 "datetime": stock.get("values", [{}])[0].get("datetime"),
                 "changeFrom1hour": stock.get("change"),
@@ -323,7 +320,7 @@ def get_flights(origin_city, destination_city, departure_date, return_date):
 
 # --- Testaufrufe ---
 if __name__ == "__main__":
-    print("📈 1: Aktienkurs:", get_stock_price(["Apple"]))
+    print("📈 1: Aktienkurs:", get_stock_price(["Siemens AG"]))
     #print("📰 2: Nachrichten:", get_news(["business"]))
     #print("🌤️ 3: Wetter:", get_weather(["Invalid"]))
     #print("🍽️ 4: Mensa:", get_mensa_info("mensa ludwigsburg, ludwigsburg", "2025-04-09"))
