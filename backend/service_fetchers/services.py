@@ -1,9 +1,9 @@
 import requests
 import os
 from dotenv import load_dotenv
-#from geopy.geocoders import Nominatim # INSTALLIEREN!!!
+from geopy.geocoders import Nominatim
 import time
-import difflib # Installieren!!!
+import difflib
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 env_path = os.path.join(BASE_DIR, ".env")
@@ -91,12 +91,6 @@ def get_weather(cities):
     return weatherCities
 
 
-
-
-
-
-
-
 # 4. Cafeteria (CafeteriaAPI)
 def get_canteen_id_by_fuzzy_name(name_query, min_ratio=0.6):
     url = "https://openmensa.org/api/v2/canteens"
@@ -125,10 +119,13 @@ def get_canteen_id_by_fuzzy_name(name_query, min_ratio=0.6):
 
     return candidates[matches[0]]
 
-def get_meals_by_name_and_date(canteen_name, date):
-    canteen_id = get_canteen_id_by_fuzzy_name(canteen_name)
-    print(f"Kantinen-ID:", canteen_id)
-    # canteen_id = 1202  # ID der Mensa Central Stuttgart (Beispiel)
+def get_mensa_info(canteen_id):
+
+    date = time.strftime("%Y-%m-%d") # heute Datum im Format YYYY-MM-DD
+    #canteen_id = get_canteen_id_by_fuzzy_name(canteen_name)
+
+    print(f"Kantinen-ID:", canteen_id) # canteen_id = 1202  # ID der Mensa Central Stuttgart (Beispiel)
+    
     if not canteen_id:
         return {"error": "Kantine nicht gefunden."}
 
@@ -139,6 +136,12 @@ def get_meals_by_name_and_date(canteen_name, date):
         return {"error": f"Fehler beim Abrufen: {response.status_code}"}
 
     return response.json()
+
+
+
+
+
+
 
 
 '''
@@ -304,7 +307,7 @@ if __name__ == "__main__":
     #print("📈 1: Aktienkurs:", get_stock_price(["AAL", "GOOGL"]))
     #print("📰 2: Nachrichten:", get_news(["business"]))
     #print("🌤️ 3: Wetter:", get_weather(["Stuttgart"]))
-    print("🍽️ 4: Mensa:", get_meals_by_name_and_date("mensa central stuttgart", "2025-04-09"))
+    print("🍽️ 4: Mensa:", get_mensa_info("1202"))
     #print("📅 5: Stundenplan:", get_rapla_scedule("doelker%40verwaltung.ba-stuttgart.de", "2025SS"))
     #print("🚗 6: Routenzeit:", get_travel_time("driving-car", "Stuttgart", "Hamburg"))
     #print("🏨 7: Hotels:", get_hotels("Stuttgart", "2025-05-10", "2025-05-12"))
