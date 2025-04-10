@@ -1,6 +1,6 @@
 # Define conversation flow states (für die Einrichtung)
 (
-    CAFETERIA, 
+    CANTEEN, 
     CITY, 
     TRANSPORT, 
     STOCKS, 
@@ -10,7 +10,7 @@
 # Zustände für Updates
 (
     BUTTON,
-    CAFETERIA_UPDATE,
+    CANTEEN_UPDATE,
     CITY_UPDATE,
     TRANSPORT_UPDATE,
     STOCKS_DELETE,

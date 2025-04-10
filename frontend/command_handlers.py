@@ -5,9 +5,9 @@ from telegram.ext import (
 )
 
 from pref_config import (
-    CAFETERIA, CITY, TRANSPORT, STOCKS, NEWS,
+    CANTEEN, CITY, TRANSPORT, STOCKS, NEWS,
     
-    BUTTON, CAFETERIA_UPDATE, CITY_UPDATE,
+    BUTTON, CANTEEN_UPDATE, CITY_UPDATE,
     TRANSPORT_UPDATE, STOCKS_DELETE, STOCKS_ADD,
     NEWS_DELETE, NEWS_ADD
 )
@@ -26,7 +26,7 @@ class CommandHandlers:
         init_handler = ConversationHandler(
             entry_points=[CommandHandler("start", self.start_handler.start_initialization)],
             states={
-                CAFETERIA: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.start_handler.initialize_cafeteria)],
+                CANTEEN: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.start_handler.initialize_canteen)],
                 CITY: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.start_handler.initialize_city)],
                 TRANSPORT: [CallbackQueryHandler(self.start_handler.initialize_transport, pattern=r"^transport:")],
                 STOCKS: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.start_handler.initialize_stocks)],
@@ -39,7 +39,7 @@ class CommandHandlers:
             entry_points=[CommandHandler("changepref", self.pref_handler.start_change_preferences)],
             states={
                 BUTTON: [CallbackQueryHandler(self.pref_handler.process_preference_button_click)],
-                CAFETERIA_UPDATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.pref_handler.change_cafeteria)],
+                CANTEEN_UPDATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.pref_handler.change_canteen)],
                 CITY_UPDATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.pref_handler.change_city)],
                 TRANSPORT_UPDATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.pref_handler.change_transport)],
                 STOCKS_DELETE: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.pref_handler.remove_stocks)],
