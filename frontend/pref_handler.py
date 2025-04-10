@@ -14,7 +14,7 @@ class PreferenceHandler:
     async def ask_user_for_preference_change(self, update: Update, context: CallbackContext, state: int, message: str):
         """Fragt den Benutzer nach einem neuen Eintrag für die Präferenz."""
         query = update.callback_query
-        await query.message.reply_text(message, parse_mode="Markdown")
+        await query.message.reply_text(message)
         return state
 
 
