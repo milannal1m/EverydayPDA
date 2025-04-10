@@ -1,24 +1,39 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from services import get_stock_price, get_news, get_weather, get_meals_by_name_and_date, get_hotels
+from services import get_stock_price, get_news, get_weather, get_hotels
 
 class TestServices(unittest.TestCase):
     @patch("services.requests.get")
-    def test_get_stock_price_valid_symbol(self, mock_get):
+    def test_get_stock_price_valid_name(self, mock_get):
 
         mock_get.side_effect = [
+            MagicMock(status_code=200, json=lambda: {
+                    "data": [
+                        {
+                            "symbol": "APPL",
+                            "instrumentName": "Apple Inc."
+                        }
+                    ]
+            }),
 
             MagicMock(status_code=200, json=lambda: {
-                "values": [{"close": "150.23", "datetime": "2025-04-09 14:30:00"}]
+                "values": [
+                    {
+                    "close": "150.23",
+                    "datetime": "2025-04-09 14:30:00"
+                    }
+                ]
             }),
-            MagicMock(status_code=200, json=lambda: {"change": "0.5"})
 
+            MagicMock(status_code=200, json=lambda: {
+                "change": "0.5"
+            })
         ]
 
-        # Test the stock function with a valid symbol
-        result = get_stock_price(["AAPL"])
+        # Test the stock function with a valid name
+        result = get_stock_price(["Apple"])
         expected = {
-            "AAPL": {
+            "Apple": {
                 "price": "150.23",
                 "datetime": "2025-04-09 14:30:00",
                 "changeFrom1hour": "0.5"

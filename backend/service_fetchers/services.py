@@ -1,7 +1,7 @@
 import requests
 import os
 from dotenv import load_dotenv
-from geopy.geocoders import Nominatim
+#from geopy.geocoders import Nominatim
 import time
 import difflib
 
@@ -30,6 +30,7 @@ def get_stock_price(names):
         response = requests.get(search_url)
         data = response.json()
 
+
         if not data.get("data"):
             continue  # Skip if no match found
 
@@ -43,6 +44,8 @@ def get_stock_price(names):
         response = requests.get(url)
         stock = response.json()
 
+        print(response.json())
+
         # Get quote with hourly change
         url = (
             f"https://api.twelvedata.com/quote"
@@ -50,6 +53,8 @@ def get_stock_price(names):
         )
         response = requests.get(url)
         stock.update(response.json())
+
+
 
         if response.json().get("code") == 400:
             continue
@@ -318,7 +323,7 @@ def get_flights(origin_city, destination_city, departure_date, return_date):
 
 # --- Testaufrufe ---
 if __name__ == "__main__":
-    #print("📈 1: Aktienkurs:", get_stock_price(["Apple", "Google"]))
+    print("📈 1: Aktienkurs:", get_stock_price(["Apple"]))
     #print("📰 2: Nachrichten:", get_news(["business"]))
     #print("🌤️ 3: Wetter:", get_weather(["Invalid"]))
     #print("🍽️ 4: Mensa:", get_mensa_info("mensa ludwigsburg, ludwigsburg", "2025-04-09"))
