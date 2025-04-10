@@ -156,8 +156,7 @@ def get_weather(cities):
 # 4. Canteen Info (OpenMensa API)
 #
 # Parameters:
-# - canteen_name (str): Approximate name of the canteen (e.g., "Mensa Stuttgart")
-# - min_ratio (float): Minimum similarity ratio for fuzzy matching (default: 0.6)
+# - canteen_name (list of str): List of Approximate names of canteens (e.g., ["Mensa Central", "Mensa Hohenheim"])
 #
 # Returns:
 # - dict: Maps each meal name to:
@@ -313,22 +312,41 @@ def get_rapla_schedule(dates):
     return events
 
 
-# 6. Wegezeitberechnung (OpenRouteService)
-# Transport_Medium: "driving-car", "driving-hgv", "cycling-regular", "cycling-road", "cycling-mountain", "cycling-electric", "foot-walking", "foot-hiking", "wheelchair"
-def geocode_location(place):
-    geolocator = Nominatim(user_agent="route_planner")
-    location = geolocator.geocode(place)
-    time.sleep(1)  # Vermeidung von Rate-Limiting
-    if location:
-        return [location.longitude, location.latitude]
-    return None
+# 6. Travel Time (OpenRouteService)
+#
+# Parameters:
+# - input_list (list): List in the form:
+#     [transport_medium, start_location, end_location]
+#   transport_medium (str): One of the following:
+#     "driving-car", "driving-hgv", "cycling-regular", "cycling-road", 
+#     "cycling-mountain", "cycling-electric", "foot-walking", 
+#     "foot-hiking", "wheelchair"
+#
+# Returns:
+# - dict: travel_info – contains either:
+#     - "distance_km" (float): Distance in kilometers
+#     - "duration_min" (float): Duration in minutes
+#   or:
+#     - "error" (str): Error message
+def get_travel_info(input_list):
+    def geocode_location(place):
+        geolocator = Nominatim(user_agent="route_planner")
+        location = geolocator.geocode(place)
+        time.sleep(1)
+        if location:
+            return [location.longitude, location.latitude]
+        return None
 
-def get_travel_time(transport_medium, start_location, end_location):
+    if len(input_list) != 3:
+        return {"travel_info": {"error": "Input list must contain exactly 3 elements"}}
+
+    transport_medium, start_location, end_location = input_list
+
     start_coords = geocode_location(start_location)
     end_coords = geocode_location(end_location)
 
     if not start_coords or not end_coords:
-        return {"error": "Ungültiger Start- oder Zielort"}
+        return {"travel_info": {"error": "Ungültiger Start- oder Zielort"}}
 
     url = f"https://api.openrouteservice.org/v2/directions/{transport_medium}/geojson"
     headers = {
@@ -344,17 +362,36 @@ def get_travel_time(transport_medium, start_location, end_location):
     data = response.json()
 
     if "features" not in data:
-        return {"error": data.get("error", response.text)}
+        return {"travel_info": {"error": data.get("error", response.text)}}
 
     segment = data["features"][0]["properties"]["segments"][0]
-    return {
+    travel_info = {
         "distance_km": round(segment["distance"] / 1000, 2),
         "duration_min": round(segment["duration"] / 60, 2)
     }
 
+    return {"travel_info": travel_info}
 
-# 7. Hotelsuche (Hotellook)
-def get_hotels(city, check_in, check_out):
+
+
+
+
+# 7. Hotel Search (Hotellook)
+#
+# Parameters:
+# - input_list (list): List in the form:
+#     [city (str), check_in (str: YYYY-MM-DD), check_out (str: YYYY-MM-DD)]
+#
+# Returns:
+# - dict: hotels – contains hotel names as keys and:
+#     - "price" (float or str): Price in EUR or "keine Angabe"
+#     - "stars" (int or str): Hotel star rating or "keine Angabe"
+def get_hotels(input_list):
+    if len(input_list) != 3:
+        return {"error": "Input list must contain exactly 3 elements"}
+
+    city, check_in, check_out = input_list
+
     url = "https://engine.hotellook.com/api/v2/cache.json"
     params = {
         "location": city,
@@ -367,9 +404,8 @@ def get_hotels(city, check_in, check_out):
     response = requests.get(url, params=params)
     hotel_data = response.json()
 
-    # Fehlerprüfung, wenn hotel_data ein Fehlerobjekt ist
     if isinstance(hotel_data, dict) and hotel_data.get("errorCode") == 2:
-        return {}
+        return {"hotels": {}}
 
     hotels = {}
     for hotel in hotel_data:
@@ -378,7 +414,8 @@ def get_hotels(city, check_in, check_out):
             "stars": hotel.get("stars", "keine Angabe")
         }
 
-    return hotels
+    return {"hotels": hotels}
+
 
 
 
@@ -446,11 +483,11 @@ def get_flights(origin_city, destination_city, departure_date, return_date):
 
 # --- Testaufrufe ---
 if __name__ == "__main__":
-    print("📈 1: Aktienkurs:", get_stock_price(["Siemens AG"]))
-    print("📰 2: Nachrichten:", get_news(["business"]))
-    print("🌤️ 3: Wetter:", get_weather(["Stuttgart"]))
-    print("🍽️ 4: Mensa:", get_canteen_info(["Mensa Central"]))
-    print("📅 5: Stundenplan:", get_rapla_schedule(["2025-04-15"]))
-    print("🚗 6: Routenzeit:", get_travel_time("driving-car", "Stuttgart", "Hamburg"))
-    print("🏨 7: Hotels:", get_hotels("Berlin", "2025-05-10", "2025-05-12"))
-    print("✈️ 8: Flugstatus:", get_flights("Stuttgart", "Hamburg", "2025-05-10", "2025-05-15"))
+    #print("📈 1: Aktienkurs:", get_stock_price(["Siemens AG"]))
+    #print("📰 2: Nachrichten:", get_news(["business"]))
+    #print("🌤️ 3: Wetter:", get_weather(["Stuttgart"]))
+    #print("🍽️ 4: Mensa:", get_canteen_info(["Mensa Central"]))
+    #print("📅 5: Stundenplan:", get_rapla_schedule(["2025-04-15"]))
+    print("🚗 6: Routenzeit:", get_travel_info(["driving-car", "Stuttgart", "Hamburg"]))
+    print("🏨 7: Hotels:", get_hotels(["Berlin", "2025-05-10", "2025-05-12"]))
+    #print("✈️ 8: Flugstatus:", get_flights("Stuttgart", "Hamburg", "2025-05-10", "2025-05-15"))
