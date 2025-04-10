@@ -16,4 +16,4 @@ RUN apt-get install -y flac
 COPY . .
 
 # Run the bot
-CMD ["python", "bot.py"]
+CMD ["python", "main.py"]

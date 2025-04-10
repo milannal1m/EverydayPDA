@@ -5,7 +5,7 @@ import os
 import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from AnswerProcessor import AnswerProcessor
+from answer_processor import AnswerProcessor
 from main import app, User
 
 class TestGetPreferences(unittest.IsolatedAsyncioTestCase):

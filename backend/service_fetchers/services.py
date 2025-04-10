@@ -28,16 +28,15 @@ def get_stock_price(symbols):
         response = requests.get(url)
         stock.update(response.json())
 
-        if "code" in stock == 400:
+        if response.json().get("code") == 400:
             stocks = {}
-            break
-
-        # Filters out the stocks symbol, price and datetime
-        stocks[symbol] = {
-            "price": stock.get("values", [{}])[0].get("close"),
-            "datetime": stock.get("values", [{}])[0].get("datetime"),
-            "changeFrom1hour": stock.get("change")
-        }
+        else:
+            # Filters out the stocks symbol, price and datetime
+            stocks[symbol] = {
+                "price": stock.get("values", [{}])[0].get("close"),
+                "datetime": stock.get("values", [{}])[0].get("datetime"),
+                "changeFrom1hour": stock.get("change")
+            }
 
     return stocks
 
@@ -52,21 +51,20 @@ def get_news(categories):
         response = requests.get(url)
         articles = response.json().get("articles", [])
 
-        # Adds the category to the news dictionary
-        if category not in news:
-            news[category] = []
-
-        if "totalResults" in articles == 0:
+        if response.json().get("totalResults") == 0:
             news = {}
-            break
+        else:
+            # Adds the category to the news dictionary
+            if category not in news:
+                news[category] = []
 
-        # Filters out the articles title and url
-        for article in articles:
-            news[category].append({ 
-                "title": article.get("title"),
-                "source": article.get("url"),
-                "publishedAt": article.get("publishedAt"),
-            })
+            # Filters out the articles title and url
+            for article in articles:
+                news[category].append({ 
+                    "title": article.get("title"),
+                    "source": article.get("url"),
+                    "publishedAt": article.get("publishedAt"),
+                })
 
     return news
 
@@ -76,17 +74,20 @@ def get_weather(cities):
     weatherCities = {}
 
     for city in cities:
-        url = f"http://api.weatherapi.com/v1/current.json&/forecast.json ?key={WEATHER_API_KEY}&q={city}"
+        url = f"http://api.weatherapi.com/v1/current.json&/forecast.json?key={WEATHER_API_KEY}&q={city}"
         response = requests.get(url)
         condition = response.json()
 
-        # Filters out the locations name, temperature and feelslike temperature
-        weatherCities[city] = {
-                "temperature": condition.get("current", {}).get("temp_c"),
-                "feelslike": condition.get("current", {}).get("feelslike_c"),
-                "max_temp": condition.get("forecast", {}).get("forecastday", [{}])[0].get("day", {}).get("maxtemp_c"),
-                "min_temp": condition.get("forecast", {}).get("forecastday", [{}])[0].get("day", {}).get("mintemp_c"),
-            } 
+        if response.json().get("error", {}).get("message") == "No matching location found.":
+            weatherCities = {}
+        else:
+            # Filters out the locations name, temperature and feelslike temperature
+            weatherCities[city] = {
+                    "temperature": condition.get("current", {}).get("temp_c"),
+                    "feelslike": condition.get("current", {}).get("feelslike_c"),
+                    "max_temp": condition.get("forecast", {}).get("forecastday", [{}])[0].get("day", {}).get("maxtemp_c"),
+                    "min_temp": condition.get("forecast", {}).get("forecastday", [{}])[0].get("day", {}).get("mintemp_c"),
+                } 
                
     return weatherCities
 
@@ -105,6 +106,8 @@ def get_canteen_id_by_fuzzy_name(name_query, min_ratio=0.6):
         canteens = response.json()
         if not canteens:
             break
+
+        print(canteens)
 
         for canteen in canteens:
             full_name = f"{canteen.get('name', '')} {canteen.get('city', '')}"
@@ -129,43 +132,32 @@ def get_mensa_info(canteen_id):
     if not canteen_id:
         return {"error": "Kantine nicht gefunden."}
 
+    meals = {}
+
     url = f"https://openmensa.org/api/v2/canteens/{canteen_id}/days/{date}/meals"
     response = requests.get(url)
 
     if response.status_code != 200:
         return {"error": f"Fehler beim Abrufen: {response.status_code}"}
 
-    return response.json()
+    meal_data = response.json()
+
+    for meal in meal_data:
+        meals[meal.get("name")] = {
+            "category": meal.get("category"),
+            "price": meal.get("prices", {}).get("students"),
+        }
+
+    return meals
 
 
-
-
-
-
-
-
-'''
     
-# 5. Stundenplan (StundenplanAPI)
+#5. Stundenplan (StundenplanAPI)
 def get_rapla_scedule(user_id, semester):
-    url = f"https://rapla-api.dhbw-stuttgart.de/v1/stundenplan/{user_id}/{semester}"
+    url = f"https://rapla.dhbw.de/rapla/file=6Q0QSbNtpyeYPKQhnGFTaEN6AggaPdGgCFyhd5ANmjydX8WyDjUfLBh4YjDgat2dJd8as6Az5GGmQilBwJydDTQpeHfV6bTghpX2dlRU6RU5QsAKr6ARjgRj_BxZmmhVA3Tk_bSK4acN3oO7a7PkNAHTfszb0OA4_JMp8zdoYDY/user=inf22168@lehre.dhbw-stuttgart.de/day=today"
     response = requests.get(url)
     
-    # Überprüfen, ob der API-Aufruf erfolgreich war
-    if response.status_code != 200:
-        return {"error": f"Fehler beim Abrufen des Stundenplans: {response.status_code}"}
-    
-    # JSON-Daten aus der API-Antwort extrahieren
-    data = response.json()
-    
-    if "error" in data:
-        return {"error": f"API-Fehler: {data['error']}"}
-    
-    return data
-'''
-
-
-
+    return response.json()
 
 
 
@@ -212,31 +204,29 @@ def get_travel_time(transport_medium, start_location, end_location):
 # 7. Hotelsuche (Hotellook)
 def get_hotels(city, check_in, check_out):
 
-    location = city
-    limit=5
-
     url = "https://engine.hotellook.com/api/v2/cache.json"
     params = {
-        "location": location,
+        "location": city,
         "currency": "eur",
         "checkIn": check_in,
         "checkOut": check_out,
-        "limit": limit
+        "limit": 5
     }
 
     response = requests.get(url, params=params)
-    if response.status_code != 200:
-        return {"error": f"API-Fehler: {response.status_code} - {response.text}"}
 
-    data = response.json()
-    hotels = []
+    hotel_data = response.json()
 
-    for item in data:
-        hotels.append({
-            "name": item.get("hotelName", "Unbekannt"),
-            "price": item.get("priceFrom", "k.A."),
-            "stars": item.get("stars", "k.A.")
-        })
+    hotels = {}
+
+    for hotel in hotel_data:
+        if hotel_data.get("errorCode") == 2:
+            hotels = {}
+        else:
+                hotels[hotel.get("hotelName")]=({
+                "price": hotel.get("priceFrom", "keine Angabe"),
+                "stars": hotel.get("stars", "keine Angabe")
+            })
 
     return hotels
 
@@ -304,11 +294,11 @@ def get_flights(origin_city, destination_city, departure_date, return_date):
 
 # --- Testaufrufe ---
 if __name__ == "__main__":
-    #print("📈 1: Aktienkurs:", get_stock_price(["AAL", "GOOGL"]))
+    #print("📈 1: Aktienkurs:", get_stock_price(["INVALID"]))
     #print("📰 2: Nachrichten:", get_news(["business"]))
-    #print("🌤️ 3: Wetter:", get_weather(["Stuttgart"]))
-    print("🍽️ 4: Mensa:", get_mensa_info("1202"))
+    #print("🌤️ 3: Wetter:", get_weather(["Invalid"]))
+    #print("🍽️ 4: Mensa:", get_meals_by_name_and_date("mensa ludwigsburg, ludwigsburg", "2025-04-09"))
     #print("📅 5: Stundenplan:", get_rapla_scedule("doelker%40verwaltung.ba-stuttgart.de", "2025SS"))
     #print("🚗 6: Routenzeit:", get_travel_time("driving-car", "Stuttgart", "Hamburg"))
-    #print("🏨 7: Hotels:", get_hotels("Stuttgart", "2025-05-10", "2025-05-12"))
+    print("🏨 7: Hotels:", get_hotels("Berlin", "25-05-10", "2025-05-12"))
     #print("✈️ 8: Flugstatus:", get_flights("Stuttgart", "London", "2025-05-10", "2025-05-15"))

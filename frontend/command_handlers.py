@@ -55,7 +55,7 @@ TRANSPORT_CATEGORIES = [
 user_data_store = {}
 
 ##############################################
-# CONVERSATION HANDLER: Einrichtungsprozess
+# /START HANDLER: Einrichtungsprozess
 ##############################################
 
 async def start_initialization(update: Update, context: CallbackContext):
@@ -102,6 +102,7 @@ async def initialize_city(update: Update, context: CallbackContext):
     user_data_store.setdefault(user_id, {})[key] = update.message.text.strip()
     await update.message.reply_text(next_question)
     return await initialize_transport(update, context)
+
 
 async def initialize_transport(update: Update, context: CallbackContext):
     """Zeigt eine Inline-Tastatur zur Auswahl des bevorzugten Transports und verarbeitet die Auswahl."""
@@ -233,7 +234,7 @@ async def end_initialization(update: Update, context: CallbackContext):
 
 
 ##############################################
-# COMMAND HANDLER für Präferenzen ändern
+# /SHOWPREF & /CHANGEPREF HANDLERS
 ##############################################
 
 async def ask_user_for_preference_change(update: Update, context: CallbackContext, state: int, message: str):
@@ -243,42 +244,51 @@ async def ask_user_for_preference_change(update: Update, context: CallbackContex
     return state
 
 
-async def show_preferences(update: Update, context: CallbackContext):
-    """Zeigt die bestehenden Präferenzen oder startet den Einrichtungsprozess, falls keine vorhanden sind."""
+async def get_summary(update: Update, context: CallbackContext):
     prefs, status = api_client.get_preferences(update.effective_user.id)
     if status == "success":
-        await update.message.reply_text(prefs)
+        summary = (f"Hier ist deine Übersicht:\n\n"
+        f"📚 Kurs: {prefs['course']}\n"
+        f"🍽️ Mensa: {prefs['cafeteria']}\n"
+        f"🏠 Wohnort: {prefs['city']}\n"
+        f"🚆 Transport: {prefs['preferred_transport_medium']}\n"
+        f"📈 Lieblingsaktien: {', '.join(prefs['stocks'])}\n"
+        f"📰 Nachrichtenquellen: {', '.join(prefs['news'])}")
+        return summary
     else:
-        await update.message.reply_text("Du hast noch keine Präferenzen festgelegt. Starte den Einrichtungsprozess mit /start:")
+        return "Du hast noch keine Präferenzen festgelegt. Starte den Einrichtungsprozess mit /start."
+
+
+async def show_preferences(update: Update, context: CallbackContext):
+    """Zeigt die bestehenden Präferenzen oder startet den Einrichtungsprozess, falls keine vorhanden sind."""
+    text = await get_summary(update, context)
+    await update.message.reply_text(text)
 
 
 async def start_change_preferences(update: Update, context: CallbackContext):
     """Ermöglicht das Anschauen und Ändern von Präferenzen."""
-    prefs, status = api_client.get_preferences(update.effective_user.id)
-    if status == "success":
-        await update.message.reply_text(prefs)
-        keyboard = [
-            [
-                InlineKeyboardButton("📚 Kurs", callback_data="course"),
-                InlineKeyboardButton("🍽️ Mensa", callback_data="cafeteria")
-            ],
-            [
-                InlineKeyboardButton("🏠 Wohnort", callback_data="city"),
-                InlineKeyboardButton("🚆 Transport", callback_data="transport")
-            ],
-            [
-                InlineKeyboardButton("📈 Aktien", callback_data="stocks"),
-                InlineKeyboardButton("📰 Nachrichten", callback_data="news")
-            ],
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await update.message.reply_text(
-            "Welche Präferenz möchtest du ändern?:",
-            reply_markup=reply_markup
-        )
-        return BUTTON
-    else:
-        await update.message.reply_text("Du hast noch keine Präferenzen festgelegt. Starte den Einrichtungsprozess mit /start:")
+    text = await get_summary(update, context)
+    await update.message.reply_text(text)
+    keyboard = [
+        [
+            InlineKeyboardButton("📚 Kurs", callback_data="course"),
+            InlineKeyboardButton("🍽️ Mensa", callback_data="cafeteria")
+        ],
+        [
+            InlineKeyboardButton("🏠 Wohnort", callback_data="city"),
+            InlineKeyboardButton("🚆 Transport", callback_data="transport")
+        ],
+        [
+            InlineKeyboardButton("📈 Aktien", callback_data="stocks"),
+            InlineKeyboardButton("📰 Nachrichten", callback_data="news")
+        ],
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text(
+        "Welche Präferenz möchtest du ändern?:",
+        reply_markup=reply_markup
+    )
+    return BUTTON
 
 
 async def change_course(update: Update, context: CallbackContext):

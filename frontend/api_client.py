@@ -17,20 +17,30 @@ def get_answer(message: str, user_id: int) -> str:
         return "Ich kann mich gerade nicht mit der API verbinden."
     
 
-def get_morning_message(user_id: int) -> str:
+def get_all_morning_messages() -> str:
     url = "http://api:8000/morning"
-    params = {"user_id": str(user_id)}  # Query-Parameter
     try:
-        response = requests.get(url, params=params)
+        response = requests.get(url)
 
         if response.status_code == 200:
             # JSON-Antwort parsen
             results = response.json().get("results", [])
-            # Nach der user_id suchen
-            for item in results:
-                if str(item.get("user_id")) == str(user_id):
-                    return item.get("response", "Keine Antwort gefunden.")
-            return "Die user_id wurde in der Antwort nicht gefunden."
+            return results
+        else:
+            return f"{response.status_code}: Fehler bei der Anfrage an die API."
+    except requests.RequestException:
+        return "Ich kann mich gerade nicht mit der API verbinden."
+    
+
+def get_all_proactivity_messages() -> str:
+    url = "http://api:8000/proactivity"
+    try:
+        response = requests.get(url)
+
+        if response.status_code == 200:
+            # JSON-Antwort parsen
+            results = response.json().get("results", [])
+            return results
         else:
             return f"{response.status_code}: Fehler bei der Anfrage an die API."
     except requests.RequestException:
@@ -44,14 +54,7 @@ def get_preferences(user_id: int) -> tuple:
         response = requests.get(url)
 
         if response.status_code == 200:
-            summary = (f"Hier ist deine Übersicht:\n\n"
-            f"📚 Kurs: {response.json()['course']}\n"
-            f"🍽️ Mensa: {response.json()['cafeteria']}\n"
-            f"🏠 Wohnort: {response.json()['city']}\n"
-            f"🚆 Transport: {response.json()['preferred_transport_medium']}\n"
-            f"📈 Lieblingsaktien: {', '.join(response.json()['stocks'])}\n"
-            f"📰 Nachrichtenquellen: {', '.join(response.json()['news'])}")
-            return(summary, "success")
+            return response.json(), "success"
         else:
             return(f"{response.status_code}: Fehler bei der Anzeige der Präferenzen.", "error")
     except:
