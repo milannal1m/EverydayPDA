@@ -27,8 +27,8 @@ class TestUserSummaryGenerator(unittest.IsolatedAsyncioTestCase):
     @patch("api.summary_generator.UseCaseHandler")
     async def test_get_user_proactivity_with_significant_data(self, mock_usecase_handler, mock_data_filler):
         stocks = {
-            "AAPL": {"change1hour": "2.5"},
-            "TSLA": {"change1hour": "-1.1"}
+            "AAPL": {"changeFrom1hour": "2.5"},
+            "TSLA": {"changeFrom1hour": "-1.1"}
         }
         news = {
             "some_news": [{
@@ -52,8 +52,8 @@ class TestUserSummaryGenerator(unittest.IsolatedAsyncioTestCase):
     @patch("api.summary_generator.UseCaseHandler")
     async def test_get_user_proactivity_with_no_significant_data(self, mock_usecase_handler, mock_data_filler):
         stocks = {
-            "AAPL": {"change1hour": "0.2"},
-            "TSLA": {"change1hour": "0.5"}
+            "AAPL": {"changeFrom1hour": "0.2"},
+            "TSLA": {"changeFrom1hour": "0.5"}
         }
         news = {
             "some_news": [{

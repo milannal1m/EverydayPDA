@@ -17,24 +17,25 @@ AVIATION_STACK_API_KEY = os.getenv("AVIATION_STACK_API_KEY")
 
 # 1. Stocks (Twelve Data)
 # Retrieves current stock prices using company names.
-# Input: names (list of str) – company names (e.g., "Apple", "Google")
+# Input: stock_names (list of str) – company names (e.g., "Apple", "Google")
 # Output: dict – contains price, datetime, and hourly change per company
-def get_stock_price(names):
+def get_stock_price(stock_names):
     stocks = {}
 
-    for name in names:
+    for stock_name in stock_names:
         # Lookup ticker symbol by company name
         search_url = (
-            f"https://api.twelvedata.com/symbol_search?symbol={name}&apikey={TWELVE_DATA_API_KEY}"
+            f"https://api.twelvedata.com/symbol_search?symbol={stock_name}&apikey={TWELVE_DATA_API_KEY}"
         )
         response = requests.get(search_url)
         data = response.json()
-
 
         if not data.get("data"):
             continue  # Skip if no match found
 
         symbol = data["data"][0].get("symbol")
+
+        print(f"Symbol: {symbol}")
 
         # Get latest 1min time series
         url = (
@@ -55,10 +56,10 @@ def get_stock_price(names):
         if response.json().get("code") == 400:
             continue
         else:
-            # Filters symbol, price, and timestamp
-            stocks[name] = {
+            # Filters price, timestamp and hourly change
+            stocks[stock_name] = {
                 "price": stock.get("values", [{}])[0].get("close"),
-                "datetime": stock.get("values", [{}])[0].get("datetime"),
+                "timestamp": stock.get("values", [{}])[0].get("datetime"),
                 "changeFrom1hour": stock.get("change"),
             }
 
@@ -184,7 +185,7 @@ def get_rapla_schedule(date):
 
     current_event = {}
     events = {}
-
+    
     # Goes through all lines of the given ics file
 
     for line in ics_file.splitlines():
@@ -200,18 +201,18 @@ def get_rapla_schedule(date):
                 current_event["summary"] = line.replace("SUMMARY:", "").strip()
 
             elif line.startswith("DTSTART;TZID=Europe/Berlin:"):
-                start_date = line.replace("DTSTART;TZID=Europe/Berlin:", "").strip().split("T")[0]
-                current_event["start"] = f"{start_date[:4]}-{start_date[4:6]}-{start_date[6:]}"
+                start_time = line.replace("DTSTART;TZID=Europe/Berlin:", "").strip().split("T")[1]
+                current_event["start"] = f"{start_time[:2]}:{start_time[4:6]}"
 
             elif line.startswith("DTEND;TZID=Europe/Berlin:"):
-                end_date = line.replace("DTEND;TZID=Europe/Berlin:", "").strip().split("T")[0]
-                current_event["end"] = f"{end_date[:4]}-{end_date[4:6]}-{end_date[6:]}"
+                end_time = line.replace("DTEND;TZID=Europe/Berlin:", "").strip().split("T")[1]
+                current_event["end"] = f"{end_time[:2]}:{end_time[4:6]}"
 
             elif line.startswith("LOCATION:"):
                 current_event["location"] = line.replace("LOCATION:", "").strip()
                 
-            elif line.startswith("END:VEVENT"):
-                if "summary" in current_event and current_event["timestamp"] == date.strip():
+            elif line.startswith("END:VEVENT"): # Looks whrere the event ends
+                if "summary" in current_event and current_event["timestamp"] == date.strip(): # Checks if the current event date is the same as given date
                     events[current_event["summary"]] = {
                         "start": current_event.get("start"),
                         "end": current_event.get("end"),
@@ -353,7 +354,7 @@ def get_flights(origin_city, destination_city, departure_date, return_date):
 
 # --- Testaufrufe ---
 if __name__ == "__main__":
-    #print("📈 1: Aktienkurs:", get_stock_price(["Apple"]))
+    print("📈 1: Aktienkurs:", get_stock_price(["Siemens AG"]))
     #print("📰 2: Nachrichten:", get_news(["business"]))
     #print("🌤️ 3: Wetter:", get_weather(["Invalid"]))
     #print("🍽️ 4: Mensa:", get_mensa_info("mensa ludwigsburg, ludwigsburg", "2025-04-09"))

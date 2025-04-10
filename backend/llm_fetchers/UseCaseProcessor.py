@@ -43,8 +43,10 @@ class UseCaseProcessor(ChatGPTProcessor):
         context = (
             f"These are the required fields: {information_needed}. "
             f"Here's the user input: {user_input}. "
-            "Return a dictionary where each key is one of the fields, and the value is a list of strings provided in the input. "
-            "If the value isn't provided, use ['']. Only return the dictionary."
+            "If the input isn't in English, internally translate it. "
+            "Return a dictionary where each key is one of the fields, and the value is a list of strings provided in the input."
+            "Usually the information provided is a single word"
+            "If the value isn't provided always return ['']. Never return the whole question. Only return the dictionary."  
         )
         structured = self.process_input_with_context(user_input, context, ExtractedInformation)
         return self.parse_response(structured.info)

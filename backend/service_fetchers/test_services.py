@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from services import get_stock_price, get_news, get_weather, get_hotels
+from services import get_stock_price, get_news, get_weather, get_rapla_schedule, get_hotels
 
 class TestServices(unittest.TestCase):
     @patch("services.requests.get")
@@ -35,8 +35,9 @@ class TestServices(unittest.TestCase):
         expected = {
             "Apple": {
                 "price": "150.23",
-                "datetime": "2025-04-09 14:30:00",
-                "changeFrom1hour": "0.5"
+                "changeFrom1hour": "0.5",
+                "timestamp": "2025-04-09 14:30:00"
+
             }
         }
 
@@ -151,6 +152,7 @@ class TestServices(unittest.TestCase):
 
         result = get_weather(["Invalid"])
         expected = {}
+        
         self.assertEqual(result, expected)
 
     @patch("services.requests.get")
@@ -196,6 +198,7 @@ class TestServices(unittest.TestCase):
         expected = {}
         self.assertEqual(result, expected)
 
+
     @patch("services.requests.get")
     def test_get_hotels_valid_location_invalid_checkInDate(self, mock_get):
 
@@ -212,6 +215,60 @@ class TestServices(unittest.TestCase):
         result = get_hotels("Berlin", "25-04-09", "2025-04-10")
         expected = {}
         self.assertEqual(result, expected)
+
+    @patch("services.requests.get")
+    def test_get_rapla_schedule(self, mock_get):
+
+        # Mocks a successful API response for a valid date
+
+        mock_get.return_value = MagicMock(status_code=200, text=
+        """
+        BEGIN:VEVENT
+        UID:20250429T140000_Klausur-"Sensorik-und-Aktorik"--STG-TINF22IN
+        DTSTAMP:20250429T140000
+        DTSTART;TZID=Europe/Berlin:20250429T140000
+        DTEND;TZID=Europe/Berlin:20250429T150000
+        SUMMARY:Klausur "Sensorik und Aktorik"  STG-TINF22IN
+        LOCATION:LE1-C3.03 Vorlesung
+        DESCRIPTION:STG-TINF22IN, LE1-C3.02 Vorlesung, LE1-C3.03 Vorlesung
+        END:VEVENT
+        """
+        )
+
+        # Tests the Rapla function with a valid date and defines a valid expected result
+
+        result = get_rapla_schedule("2025-04-29")
+        expected = {
+            'Klausur "Sensorik und Aktorik"  STG-TINF22IN': {
+                "start": "14:00",
+                "end": "15:00",
+                "location": "LE1-C3.03 Vorlesung",
+            }
+        }
+
+        self.assertEqual(result, expected)
+    
+    @patch("services.requests.get")
+    def test_get_rapla_schedule_invalid_date(self, mock_get):
+
+        # Mocks a successful API response for an invalid date
+
+        mock_get.return_value = MagicMock(status_code=200, text=
+        """
+        BEGIN:VEVENT
+        UID:20250429T140000_Klausur-"Sensorik-und-Aktorik"--STG-TINF22IN
+        DTSTAMP:20250429T140000
+        DTSTART;TZID=Europe/Berlin:20250429T140000
+        DTEND;TZID=Europe/Berlin:20250429T150000
+        SUMMARY:Klausur "Sensorik und Aktorik"  STG-TINF22IN
+        LOCATION:LE1-C3.03 Vorlesung
+        DESCRIPTION:STG-TINF22IN, LE1-C3.02 Vorlesung, LE1-C3.03 Vorlesung
+        END:VEVENT
+        """
+        )
+
+        result = get_rapla_schedule("Invalid")
+        expected = {}
 
 if __name__ == "__main__":
     unittest.main()
