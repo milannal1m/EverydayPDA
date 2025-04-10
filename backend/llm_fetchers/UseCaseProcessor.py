@@ -59,7 +59,7 @@ class UseCaseProcessor(ChatGPTProcessor):
         prompt = (
             f"Here is the information provided by the API calls: {api_calls}. "
             f"And here is the prompt by the user: {user_input}. "
-            "Please give back the response to the user."
+            "Ensure the response is provided in plain text and in the same language as the user input."
         )
         return self.process_input(prompt)
 
