@@ -1,8 +1,7 @@
 import requests
 import os
 from dotenv import load_dotenv
-#from geopy.geocoders import Nominatim
-from datetime import datetime
+from geopy.geocoders import Nominatim
 import time
 import difflib
 
@@ -15,21 +14,6 @@ NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
 OPENROUTE_API_KEY = os.getenv("OPENROUTE_API_KEY")
 AVIATION_STACK_API_KEY = os.getenv("AVIATION_STACK_API_KEY")
-
-def is_valid_date(date_string):
-    try:
-        datetime.strptime(date_string, "%Y-%m-%d")
-        return date_string
-    except ValueError:
-        try:
-            parsed_date = datetime.strptime(date_string, "%d.%m.%Y")
-            return parsed_date.strftime("%Y-%m-%d")
-        except ValueError:
-                current_year = datetime.now().year
-                date_with_year = f"{date_string}{current_year}"
-                parsed_date = datetime.strptime(date_with_year, "%d.%m.%Y")
-                return parsed_date.strftime("%Y-%m-%d")
-            
 
 # 1. Stocks (Twelve Data)
 #
@@ -293,7 +277,6 @@ def get_rapla_schedule(dates):
 
     # Iterates through all lines of the given ICS file
     for date in dates:
-        is_valid_date(date)
         for line in ics_file.splitlines():
             line = line.strip()
 
@@ -423,35 +406,47 @@ def get_hotels(city_list, checkin_list, checkout_list):
             "stars": hotel.get("stars", "keine Angabe")
         }
 
-    return {"hotels": hotels}
+    return hotels
 
 
+# 8. Flight Information (AviationStack)
+#
+# Parameters:
+# - origin_city (list of str): A list containing the origin city name (e.g., "Stuttgart")
+# - destination_city (list of str): A list containing the destination city name (e.g., "Hamburg")
+# - departure_date (list of str): A list containing the departure date in "YYYY-MM-DD" format (e.g., "2025-05-10")
+# - return_date (list of str): A list containing the return date in "YYYY-MM-DD" format (e.g., "2025-05-15")
+#
+# Returns:
+# - dict: If successful:
+#     - "flight_name" (str): Flight IATA code or "Unknown"
+#     - "departure" (str): Estimated departure time or "N/A"
+#     - "arrival" (str): Estimated arrival time or "N/A"
+#     - "price" (str): Flight price or "N/A"
+#   If error:
+#     - "error" (str): Error message
 
+def get_flights(origin_city, destination_city, departure_date, return_date):
+    def get_iata_code(city_name):
+        # API endpoint for airport search
+        url = f"https://api.aviationstack.com/v1/airports"
+        params = {
+            "access_key": AVIATION_STACK_API_KEY,
+            "city": city_name
+        }
 
+        response = requests.get(url, params=params)
 
-# 8. Fluginformationen (AviationStack)
-def get_iata_code(city_name):
-    # API-Endpunkt für die Flughafensuche
-    url = f"https://api.aviationstack.com/v1/airports"
-    params = {
-        "access_key": AVIATION_STACK_API_KEY,
-        "city": city_name
-    }
-    
-    response = requests.get(url, params=params)
+        if response.status_code != 200:
+            return None
 
-    print(response)
-    
-    if response.status_code != 200:
-        return None
-    
-    data = response.json()
-    if not data.get("data"):
-        return None
-    
-    # Der erste Treffer (meistens der Hauptflughafen der Stadt)
-    airport = data["data"][0]
-    return airport.get("iata_code", None)
+        data = response.json()
+        if not data.get("data"):
+            return None
+
+        # The first match (usually the main airport of the city)
+        airport = data["data"][0]
+        return airport.get("iata_code", None)
 
     origin_iata = get_iata_code(origin_city[0])
     destination_iata = get_iata_code(destination_city[0])
@@ -504,6 +499,6 @@ if __name__ == "__main__":
     #print("🌤️ 3: Wetter:", get_weather(["Stuttgart"]))
     #print("🍽️ 4: Mensa:", get_canteen_info(["Mensa Central"]))
     #print("📅 5: Stundenplan:", get_rapla_schedule(["2025-04-15"]))
-    print("🚗 6: Routenzeit:", get_travel_info(["driving-car", "Stuttgart", "Hamburg"]))
-    print("🏨 7: Hotels:", get_hotels(["Berlin", "2025-05-10", "2025-05-12"]))
-    #print("✈️ 8: Flugstatus:", get_flights("Stuttgart", "Hamburg", "2025-05-10", "2025-05-15"))
+    #print("🚗 6: Routenzeit:", get_travel_info(["driving-car"], ["Stuttgart"], ["Hamburg"]))
+    #print("🏨 7: Hotels:", get_hotels(["Berlin"], ["2025-05-10"], ["2025-05-12"]))
+    print("✈️ 8: Flugstatus:", get_flights(["Stuttgart"], ["Hamburg"], ["2025-05-10"], ["2025-05-15"]))
