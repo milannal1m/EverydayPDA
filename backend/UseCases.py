@@ -10,7 +10,7 @@ class UseCases(Enum):
     WEATHER = (3, "Weather Forecasts", ["City"], get_weather)
     CAFETERIA = (4, "Canteen Menu", ["Canteen-Name"], get_canteen_info)
     TIMETABLE = (5, "Rapla-Class-Schedule", ["Date"], get_rapla_schedule)
-    TRAVEL_TIME = (6, "Traveltime", ["Transport-Medium", "Start-Location" "Destination-Location"], get_travel_info)
+    TRAVEL_TIME = (6, "Traveltime", ["Transport-Medium", "Start-Location", "Destination-Location"], get_travel_info)
     HOTEL_SEARCH = (7, "Hotel Booking", ["Hotel-Destination", "Check-in-Date", "Check-out-Date"], get_hotels)
     FLIGHT_INFORMATION = (8, "Flight Information", ["Start-Airport", "Destination-Airport", "Departure-Date", "Return-Date"], get_flights)
 

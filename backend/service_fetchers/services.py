@@ -315,20 +315,18 @@ def get_rapla_schedule(dates):
 # 6. Travel Time (OpenRouteService)
 #
 # Parameters:
-# - input_list (list): List in the form:
-#     [transport_medium, start_location, end_location]
-#   transport_medium (str): One of the following:
-#     "driving-car", "driving-hgv", "cycling-regular", "cycling-road", 
-#     "cycling-mountain", "cycling-electric", "foot-walking", 
-#     "foot-hiking", "wheelchair"
+# - transport_medium (list of str): A list containing one of the following:
+#   "driving-car", "driving-hgv", "cycling-regular", "cycling-road", "cycling-mountain", "cycling-electric", "foot-walking", "foot-hiking", "wheelchair"
+# - start_location (list of str): A list containing the start location name (e.g., "Stuttgart")
+# - end_location (list of str): A list containing the destination name (e.g., "Hamburg")
 #
 # Returns:
-# - dict: travel_info – contains either:
+# - dict: If successful:
 #     - "distance_km" (float): Distance in kilometers
 #     - "duration_min" (float): Duration in minutes
-#   or:
+#   If error:
 #     - "error" (str): Error message
-def get_travel_info(input_list):
+def get_travel_info(transport_medium, start_location, end_location):
     def geocode_location(place):
         geolocator = Nominatim(user_agent="route_planner")
         location = geolocator.geocode(place)
@@ -337,18 +335,15 @@ def get_travel_info(input_list):
             return [location.longitude, location.latitude]
         return None
 
-    if len(input_list) != 3:
-        return {"travel_info": {"error": "Input list must contain exactly 3 elements"}}
-
-    transport_medium, start_location, end_location = input_list
-
-    start_coords = geocode_location(start_location)
-    end_coords = geocode_location(end_location)
+    # Use the first element of each list for the calculation
+    transport = transport_medium[0]
+    start_coords = geocode_location(start_location[0])
+    end_coords = geocode_location(end_location[0])
 
     if not start_coords or not end_coords:
-        return {"travel_info": {"error": "Ungültiger Start- oder Zielort"}}
+        return {"error": "Ungültiger Start- oder Zielort"}
 
-    url = f"https://api.openrouteservice.org/v2/directions/{transport_medium}/geojson"
+    url = f"https://api.openrouteservice.org/v2/directions/{transport}/geojson"
     headers = {
         "Authorization": OPENROUTE_API_KEY,
         "Content-Type": "application/json"
@@ -362,7 +357,7 @@ def get_travel_info(input_list):
     data = response.json()
 
     if "features" not in data:
-        return {"travel_info": {"error": data.get("error", response.text)}}
+        return {"error": data.get("error", response.text)}
 
     segment = data["features"][0]["properties"]["segments"][0]
     travel_info = {
@@ -370,27 +365,24 @@ def get_travel_info(input_list):
         "duration_min": round(segment["duration"] / 60, 2)
     }
 
-    return {"travel_info": travel_info}
-
-
-
+    return travel_info
 
 
 # 7. Hotel Search (Hotellook)
 #
 # Parameters:
-# - input_list (list): List in the form:
-#     [city (str), check_in (str: YYYY-MM-DD), check_out (str: YYYY-MM-DD)]
+# - city_list (list): City name as first element, e.g. ["Berlin"]
+# - checkin_list (list): Check-in date (YYYY-MM-DD), e.g. ["2025-05-10"]
+# - checkout_list (list): Check-out date (YYYY-MM-DD), e.g. ["2025-05-12"]
 #
 # Returns:
-# - dict: hotels – contains hotel names as keys and:
-#     - "price" (float or str): Price in EUR or "keine Angabe"
-#     - "stars" (int or str): Hotel star rating or "keine Angabe"
-def get_hotels(input_list):
-    if len(input_list) != 3:
-        return {"error": "Input list must contain exactly 3 elements"}
-
-    city, check_in, check_out = input_list
+# - dict: hotels – contains hotel name as key and:
+#     - "price" (float or str): Price per night or "keine Angabe"
+#     - "stars" (int or str): Star rating or "keine Angabe"
+def get_hotels(city_list, checkin_list, checkout_list):
+    city = city_list[0]
+    check_in = checkin_list[0]
+    check_out = checkout_list[0]
 
     url = "https://engine.hotellook.com/api/v2/cache.json"
     params = {
@@ -398,14 +390,14 @@ def get_hotels(input_list):
         "currency": "eur",
         "checkIn": check_in,
         "checkOut": check_out,
-        "limit": 5
+        "limit": 3
     }
 
     response = requests.get(url, params=params)
     hotel_data = response.json()
 
     if isinstance(hotel_data, dict) and hotel_data.get("errorCode") == 2:
-        return {"hotels": {}}
+        return {}
 
     hotels = {}
     for hotel in hotel_data:
@@ -414,71 +406,90 @@ def get_hotels(input_list):
             "stars": hotel.get("stars", "keine Angabe")
         }
 
-    return {"hotels": hotels}
+    return hotels
 
 
-
-
-
-# 8. Fluginformationen (AviationStack)
-def get_iata_code(city_name):
-    # API-Endpunkt für die Flughafensuche
-    url = f"https://api.aviationstack.com/v1/airports"
-    params = {
-        "access_key": AVIATION_STACK_API_KEY,
-        "city": city_name
-    }
-    
-    response = requests.get(url, params=params)
-    
-    if response.status_code != 200:
-        return None
-    
-    data = response.json()
-    if not data.get("data"):
-        return None
-    
-    # Der erste Treffer (meistens der Hauptflughafen der Stadt)
-    airport = data["data"][0]
-    return airport.get("iata_code", None)
+# 8. Flight Information (AviationStack)
+#
+# Parameters:
+# - origin_city (list of str): A list containing the origin city name (e.g., "Stuttgart")
+# - destination_city (list of str): A list containing the destination city name (e.g., "Hamburg")
+# - departure_date (list of str): A list containing the departure date in "YYYY-MM-DD" format (e.g., "2025-05-10")
+# - return_date (list of str): A list containing the return date in "YYYY-MM-DD" format (e.g., "2025-05-15")
+#
+# Returns:
+# - dict: If successful:
+#     - "flight_name" (str): Flight IATA code or "Unknown"
+#     - "departure" (str): Estimated departure time or "N/A"
+#     - "arrival" (str): Estimated arrival time or "N/A"
+#     - "price" (str): Flight price or "N/A"
+#   If error:
+#     - "error" (str): Error message
 
 def get_flights(origin_city, destination_city, departure_date, return_date):
-    max_results = 3
-    origin_iata = get_iata_code(origin_city)
-    destination_iata = get_iata_code(destination_city)
-    
+    def get_iata_code(city_name):
+        # API endpoint for airport search
+        url = f"https://api.aviationstack.com/v1/airports"
+        params = {
+            "access_key": AVIATION_STACK_API_KEY,
+            "city": city_name
+        }
+
+        response = requests.get(url, params=params)
+
+        if response.status_code != 200:
+            return None
+
+        data = response.json()
+        if not data.get("data"):
+            return None
+
+        # The first match (usually the main airport of the city)
+        airport = data["data"][0]
+        return airport.get("iata_code", None)
+
+    origin_iata = get_iata_code(origin_city[0])
+    destination_iata = get_iata_code(destination_city[0])
+
     if not origin_iata or not destination_iata:
-        return {"error": "Ungültige Stadt/Flughafen eingegeben."}
-    
-    # API-Endpunkt für Fluginformationen
+        return {"error": "Invalid city/airport entered."}
+
+    # Ensure the date format is correct: "YYYY-MM-DD"
+    departure_date_str = departure_date[0]
+    return_date_str = return_date[0] if return_date else None
+
+    # API endpoint for flight information
     url = "https://api.aviationstack.com/v1/flights"
     params = {
         "access_key": AVIATION_STACK_API_KEY,
-        "departure_iata": origin_iata,     # IATA-Code des Abreiseorts
-        "arrival_iata": destination_iata,  # IATA-Code des Zielorts
-        "departure_date": departure_date,  # Format: "YYYY-MM-DD"
-        "return_date": return_date         # Format: "YYYY-MM-DD" (optional)
+        "departure_iata": origin_iata,     # IATA code of the origin
+        "arrival_iata": destination_iata,  # IATA code of the destination
+        "departure_date": departure_date_str,  # Format: "YYYY-MM-DD"
+        "return_date": return_date_str         # Format: "YYYY-MM-DD" (optional)
     }
 
     response = requests.get(url, params=params)
-    
+
     if response.status_code != 200:
-        return {"error": f"API-Fehler: {response.status_code} - {response.text}"}
+        return {"error": f"API error: {response.status_code} - {response.text}"}
 
     data = response.json()
     if not data.get("data"):
-        return {"error": "Keine Flüge gefunden."}
+        return {"error": "No flights found."}
 
     flights = []
-    for flight in data["data"][:max_results]:  # Nur die ersten 'max_results' Flüge
+    max_results = 3  # Limit to first 3 flights
+    for flight in data["data"][:max_results]:
         flights.append({
-            "flight_name": flight.get("flight", {}).get("iata", "Unbekannt"),
-            "departure": flight.get("departure", {}).get("estimated", "k.A."),
-            "arrival": flight.get("arrival", {}).get("estimated", "k.A."),
-            "price": flight.get("price", {}).get("total", "k.A.")  # Falls verfügbar
+            "flight_name": flight.get("flight", {}).get("iata", "Unknown"),
+            "departure": flight.get("departure", {}).get("estimated", "N/A"),
+            "arrival": flight.get("arrival", {}).get("estimated", "N/A"),
+            "price": flight.get("price", {}).get("total", "N/A")  # If available
         })
 
     return flights
+
+
 
 
 # --- Testaufrufe ---
@@ -488,6 +499,6 @@ if __name__ == "__main__":
     #print("🌤️ 3: Wetter:", get_weather(["Stuttgart"]))
     #print("🍽️ 4: Mensa:", get_canteen_info(["Mensa Central"]))
     #print("📅 5: Stundenplan:", get_rapla_schedule(["2025-04-15"]))
-    print("🚗 6: Routenzeit:", get_travel_info(["driving-car", "Stuttgart", "Hamburg"]))
-    print("🏨 7: Hotels:", get_hotels(["Berlin", "2025-05-10", "2025-05-12"]))
-    #print("✈️ 8: Flugstatus:", get_flights("Stuttgart", "Hamburg", "2025-05-10", "2025-05-15"))
+    #print("🚗 6: Routenzeit:", get_travel_info(["driving-car"], ["Stuttgart"], ["Hamburg"]))
+    #print("🏨 7: Hotels:", get_hotels(["Berlin"], ["2025-05-10"], ["2025-05-12"]))
+    print("✈️ 8: Flugstatus:", get_flights(["Stuttgart"], ["Hamburg"], ["2025-05-10"], ["2025-05-15"]))
