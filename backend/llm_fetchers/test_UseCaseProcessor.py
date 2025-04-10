@@ -100,5 +100,12 @@ class TestUseCaseProcessor(unittest.TestCase):
         result = processor.response("User input", "API call data")
         self.assertEqual(result, "Response text")
 
+    def test_parse_response_failure(self):
+        processor = UseCaseProcessor()
+        invalid_response = "not a valid literal"  # ast.literal_eval will fail to parse this
+        result = processor.parse_response(invalid_response)
+        # Expect the invalid input to be returned unmodified.
+        self.assertEqual(result, invalid_response)
+
 if __name__ == "__main__":
     unittest.main()
