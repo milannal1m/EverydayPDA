@@ -3,7 +3,7 @@ from telegram.ext import CallbackContext, ConversationHandler
 
 import api_client
 from pref_config import (
-    CAFETERIA, CITY, TRANSPORT, STOCKS, NEWS, 
+    CANTEEN, CITY, TRANSPORT, STOCKS, NEWS, 
     NEWS_CATEGORIES, TRANSPORT_CATEGORIES
 )
 
@@ -20,10 +20,10 @@ class StartHandler:
         "Ich werde ein paar Fragen stellen, um dich besser kennenzulernen. 😊"
         )
         await update.message.reply_text("Wo ist deine Mensa (z. B. Mensa Central)?")
-        return CAFETERIA
+        return CANTEEN
 
-    async def initialize_cafeteria(self, update: Update, context: CallbackContext):
-        key = "cafeteria"
+    async def initialize_canteen(self, update: Update, context: CallbackContext):
+        key = "canteen"
         next_question = "Wo lebst du? (z. B. Berlin, München, etc.)"
         user_id = update.effective_user.id
         self.user_data_store.setdefault(user_id, {})[key] = update.message.text.strip()
@@ -117,7 +117,7 @@ class StartHandler:
         summary = (
             "Danke für deine Antworten! Hier ist deine Übersicht:\n\n"
             f"📚 Kurs: {user_info.get('course', 'Nicht angegeben')}\n"
-            f"🍽️ Mensa: {user_info.get('cafeteria', 'Nicht angegeben')}\n"
+            f"🍽️ Mensa: {user_info.get('canteen', 'Nicht angegeben')}\n"
             f"🏠 Wohnort: {user_info.get('city', 'Nicht angegeben')}\n"
             f"🚆 Transport: {user_info.get('transport', 'Nicht angegeben')}\n"
             f"📈 Aktien: {', '.join(user_info.get('stocks', []))}\n"

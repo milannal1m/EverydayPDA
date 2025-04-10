@@ -10,7 +10,7 @@
 
 ## Coverage
 
-![Coverage](https://img.shields.io/badge/Coverage-75.2%25-brightgreen)
+![Coverage](https://img.shields.io/badge/Coverage-54.9%25-brightgreen)
 
 | Datei | Coverage (%) |
 |---|---|
@@ -18,16 +18,23 @@
 | backend/api/answer_processor.py | 100.0% |
 | backend/api/data_filler.py | 100.0% |
 | backend/api/database.py | 75.0% |
-| backend/api/database_utils.py | 95.2% |
-| backend/api/main.py | 81.8% |
+| backend/api/database_utils.py | 14.3% |
 | backend/api/models.py | 100.0% |
 | backend/api/summary_generator.py | 95.1% |
 | backend/api/usecase_handler.py | 96.2% |
 | backend/llm_fetchers/ChatGPTProcessor.py | 90.0% |
 | backend/llm_fetchers/UseCaseProcessor.py | 83.3% |
-| backend/service_fetchers/services.py | 48.1% |
-| frontend/api_client.py | 58.2% |
-| **Projekt** | **75.2%** |
+| backend/service_fetchers/services.py | 42.5% |
+| frontend/api_client.py | 98.5% |
+| frontend/bot.py | 47.1% |
+| frontend/command_handlers.py | 56.2% |
+| frontend/main.py | 84.6% |
+| frontend/message_handlers.py | 23.6% |
+| frontend/pref_config.py | 100.0% |
+| frontend/pref_handler.py | 20.7% |
+| frontend/speech_utils.py | 100.0% |
+| frontend/start_handler.py | 13.0% |
+| **Projekt** | **54.9%** |
 
 ## API
 

@@ -16,20 +16,20 @@ class TestDataFiller(unittest.IsolatedAsyncioTestCase):
 
         # Input-Daten mit gemischten Fällen
         data = {
-            'Stocks': '',
-            'News Services': [''],
+            'Stock-Name': '',
+            'News-Topic': [''],
             'City': '',
-            'Destination': '',
-            'Flight_Destination': '',
+            'Destination-Location': '',
+            'Destination-Airport': '',
             'InvalidKey': '',
         }
 
         expected_data = {
-            'Stocks': ['AAPL', 'TSLA'],
-            'News Services': ['AAPL', 'TSLA'],  # gleicher Rückgabewert für den Test, weil fetch() gleich gemockt
+            'Stock-Name': ['AAPL', 'TSLA'],
+            'News-Topic': ['AAPL', 'TSLA'],  # gleicher Rückgabewert für den Test, weil fetch() gleich gemockt
             'City': ['AAPL', 'TSLA'],
-            'Destination': 'DHBW Stuttgart',
-            'Flight_Destination': 'Maldives',
+            'Destination-Location': 'DHBW Stuttgart',
+            'Destination-Airport': 'Maldives',
             'InvalidKey': None,
         }
 
@@ -49,7 +49,7 @@ class TestDataFiller(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result, {'CompletelyUnknownKey': None})
 
     def test_get_default_value(self):
-        self.assertEqual(DataFiller._DataFiller__get_default_value('Destination'), 'DHBW Stuttgart')
+        self.assertEqual(DataFiller._DataFiller__get_default_value('Destination-Location'), 'DHBW Stuttgart')
         self.assertIsNone(DataFiller._DataFiller__get_default_value('UnknownKey'))
 
     @patch('api.data_filler.get_db_connection')

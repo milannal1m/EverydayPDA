@@ -66,7 +66,7 @@ def post_preferences(user_id: int, preferences: dict) -> str:
     data = {
         "username": str(user_id),
         "course": "IN22",
-        "cafeteria": preferences.get("cafeteria", ""),
+        "canteen": preferences.get("canteen", ""),
         "city": preferences.get("city", ""),
         "preferred_transport_medium": preferences.get("transport", ""),
         "stocks": preferences.get("stocks", []),
