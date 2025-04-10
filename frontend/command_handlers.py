@@ -5,12 +5,7 @@ from telegram.ext import (
 )
 
 from pref_config import *
-from start_handler import (
-    start_initialization, initialize_course, 
-    initialize_cafeteria, initialize_city, 
-    initialize_transport, initialize_stocks, 
-    initialize_news
-)
+from start_handler import StartHandler
 from pref_handler import (
     start_change_preferences, show_preferences,
     process_preference_button_click, change_course,
@@ -24,20 +19,19 @@ logger = logging.getLogger(__name__)
 
 class CommandHandlers:
     def __init__(self):
-        # Falls du Instanzvariablen brauchst, kannst du sie hier anlegen
-        pass
+        self.start_handler = StartHandler()
 
     def configure_conversation_handlers(self, application: Application):
         """Registriert alle ConversationHandler und Commands in der Application."""
         init_handler = ConversationHandler(
-            entry_points=[CommandHandler("start", start_initialization)],
+            entry_points=[CommandHandler("start", self.start_handler.start_initialization)],
             states={
-                COURSE: [MessageHandler(filters.TEXT & ~filters.COMMAND, initialize_course)],
-                CAFETERIA: [MessageHandler(filters.TEXT & ~filters.COMMAND, initialize_cafeteria)],
-                CITY: [MessageHandler(filters.TEXT & ~filters.COMMAND, initialize_city)],
-                TRANSPORT: [CallbackQueryHandler(initialize_transport, pattern=r"^transport:")],
-                STOCKS: [MessageHandler(filters.TEXT & ~filters.COMMAND, initialize_stocks)],
-                NEWS: [CallbackQueryHandler(initialize_news, pattern=r"^news:")],
+                COURSE: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.start_handler.initialize_course)],
+                CAFETERIA: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.start_handler.initialize_cafeteria)],
+                CITY: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.start_handler.initialize_city)],
+                TRANSPORT: [CallbackQueryHandler(self.start_handler.initialize_transport, pattern=r"^transport:")],
+                STOCKS: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.start_handler.initialize_stocks)],
+                NEWS: [CallbackQueryHandler(self.start_handler.initialize_news, pattern=r"^news:")],
             },
             fallbacks=[]
         )
