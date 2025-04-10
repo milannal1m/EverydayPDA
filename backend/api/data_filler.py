@@ -1,6 +1,7 @@
 from typing import Dict, Optional
 import os
 import sys
+from datetime import date, timedelta
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from api.database import get_db_connection
@@ -13,7 +14,6 @@ class DataFiller:
             'News-Topic': "SELECT news_name FROM news n JOIN user_news un ON n.n_id = un.n_id JOIN users u ON un.u_id = u.u_id WHERE u.username = $1",
             'City': "SELECT city FROM users WHERE username = $1",
             'Canteen-Name': "SELECT cafeteria FROM users WHERE username = $1",
-            'Date': "SELECT course FROM users WHERE username = $1",
             'Transport-Medium': "SELECT preferred_transport_medium FROM users WHERE username = $1",
             'Start_Airpot': "SELECT city FROM users WHERE username = $1",
             'Start_Location': "SELECT city FROM users WHERE username = $1",
@@ -36,17 +36,18 @@ class DataFiller:
             'Destination-Location': 'DHBW Stuttgart',
             'Hotel-Destination': 'Maldives',
             'Destination-Airport': 'Maldives',
-            'Check-in-Date': '2025-05-05',
-            'Check-out-Date': '2025-05-27',
-            'Departure-Date': '2025-05-05',
-            'Return-Date': '2025-05-27'
+            'Check-in-Date': date.today().strftime('%Y-%m-%d'),
+            'Check-out-Date': (date.today() + timedelta(days=7)).strftime('%Y-%m-%d'),
+            'Departure-Date': date.today().strftime('%Y-%m-%d'),
+            'Return-Date': (date.today() + timedelta(days=7)).strftime('%Y-%m-%d'),
+            'Date': date.today().strftime('%Y-%m-%d')
         }
         return default_values.get(key)
 
     async def fill_missing_values(self, data: Dict[str, str], user_id: str) -> Dict[str, str]:
         for key in data:
             if data[key] == "" or data[key] == [""]:
-                if key in ['Stock-Name', 'News-Topic', 'City', 'Canteen-Name', 'Date', 'Transport-Medium', 'Start-Airpot', 'Start-Location']:
+                if key in ['Stock-Name', 'News-Topic', 'City', 'Canteen-Name', 'Transport-Medium', 'Start-Airpot', 'Start-Location']:
                     data[key] = await self.__fetch_from_database(key, user_id) or None
                 else:
                     data[key] = self.__get_default_value(key)
