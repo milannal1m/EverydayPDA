@@ -3,8 +3,7 @@ from telegram.ext import CallbackContext, ConversationHandler
 
 import api_client
 from pref_config import (
-    COURSE, CAFETERIA, CITY, 
-    TRANSPORT, STOCKS, NEWS, 
+    CAFETERIA, CITY, TRANSPORT, STOCKS, NEWS, 
     NEWS_CATEGORIES, TRANSPORT_CATEGORIES
 )
 
@@ -20,15 +19,7 @@ class StartHandler:
             "dein persönlicher Assistent! 🤖\n"
         "Ich werde ein paar Fragen stellen, um dich besser kennenzulernen. 😊"
         )
-        await update.message.reply_text("In welchem Kurs studierst du? (z. B. IN22)")
-        return COURSE
-
-    async def initialize_course(self, update: Update, context: CallbackContext):
-        key = "course"
-        next_question = "Wo ist deine Mensa (z. B. Mensa Central)?"
-        user_id = update.effective_user.id
-        self.user_data_store.setdefault(user_id, {})[key] = update.message.text.strip()
-        await update.message.reply_text(next_question)
+        await update.message.reply_text("Wo ist deine Mensa (z. B. Mensa Central)?")
         return CAFETERIA
 
     async def initialize_cafeteria(self, update: Update, context: CallbackContext):

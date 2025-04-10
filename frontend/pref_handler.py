@@ -2,9 +2,8 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ConversationHandler, CallbackContext
 
 from pref_config import (
-    COURSE_UPDATE, CAFETERIA_UPDATE, CITY_UPDATE, 
-    TRANSPORT_UPDATE, STOCKS_DELETE, STOCKS_ADD, 
-    NEWS_DELETE, NEWS_ADD, BUTTON
+    BUTTON, CAFETERIA_UPDATE, CITY_UPDATE, TRANSPORT_UPDATE, 
+    STOCKS_DELETE, STOCKS_ADD, NEWS_DELETE, NEWS_ADD
 )
 import api_client
 
@@ -46,15 +45,18 @@ class PreferenceHandler:
         await update.message.reply_text(text)
         keyboard = [
             [
-                InlineKeyboardButton("📚 Kurs", callback_data="course"),
                 InlineKeyboardButton("🍽️ Mensa", callback_data="cafeteria")
             ],
             [
-                InlineKeyboardButton("🏠 Wohnort", callback_data="city"),
+                InlineKeyboardButton("🏠 Wohnort", callback_data="city")
+            ],
+            [
                 InlineKeyboardButton("🚆 Transport", callback_data="transport")
             ],
             [
-                InlineKeyboardButton("📈 Aktien", callback_data="stocks"),
+                InlineKeyboardButton("📈 Aktien", callback_data="stocks")
+            ],
+            [
                 InlineKeyboardButton("📰 Nachrichten", callback_data="news")
             ],
         ]
@@ -64,13 +66,6 @@ class PreferenceHandler:
             reply_markup=reply_markup
         )
         return BUTTON
-
-
-    async def change_course(self, update: Update, context: CallbackContext):
-        new_course = update.message.text.strip()
-        response = api_client.put_preference(update.effective_user.id, "course", new_course)
-        await update.message.reply_text(response)
-        return ConversationHandler.END
 
 
     async def change_cafeteria(self, update: Update, context: CallbackContext):
@@ -129,9 +124,7 @@ class PreferenceHandler:
         query = update.callback_query
         await query.answer()
 
-        if query.data == "course":
-            return await self.ask_user_for_preference_change(update, context, COURSE_UPDATE, "Was ist dein neuer Kurs?")
-        elif query.data == "cafeteria":
+        if query.data == "cafeteria":
             return await self.ask_user_for_preference_change(update, context, CAFETERIA_UPDATE, "Was ist deine neue Mensa?")
         elif query.data == "city":
             return await self.ask_user_for_preference_change(update, context, CITY_UPDATE, "Was ist dein neuer Wohnort?")

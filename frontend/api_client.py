@@ -65,7 +65,6 @@ def post_preferences(user_id: int, preferences: dict) -> str:
     url = "http://api:8000/preferences/init"
     data = {
         "username": str(user_id),
-        "course": preferences.get("course", ""),  # Verhindert KeyError
         "cafeteria": preferences.get("cafeteria", ""),
         "city": preferences.get("city", ""),
         "preferred_transport_medium": preferences.get("transport", ""),
