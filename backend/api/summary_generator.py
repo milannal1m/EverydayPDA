@@ -18,6 +18,7 @@ class UserSummaryGenerator:
     async def get_user_proactivity(self, user_id: str):
         use_cases = [UseCases.STOCKS.value, UseCases.NEWS.value]
         api_data = await self.__get_api_data_without_gpt(use_cases, user_id)
+        print(api_data)
         stocks = api_data[UseCases.STOCKS.description]
         news = api_data[UseCases.NEWS.description]
 
@@ -40,7 +41,7 @@ class UserSummaryGenerator:
         return UseCaseHandler().call_apis(use_cases, info)
 
     def __get_significant_stocks(self, stocks):
-        return {stock_id: stock for stock_id, stock in stocks.items() if abs(float(stock.get("change1hour", 0))) > 1}
+        return {stock_id: stock for stock_id, stock in stocks.items() if abs(float(stock.get("changeFrom1hour", 0))) > 1}
 
     def __get_recent_news(self, news):
         def within_last_hour(ts: str) -> bool:

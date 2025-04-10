@@ -21,7 +21,7 @@
 | backend/api/database_utils.py | 95.2% |
 | backend/api/main.py | 81.8% |
 | backend/api/models.py | 100.0% |
-| backend/api/summary_generator.py | 95.0% |
+| backend/api/summary_generator.py | 95.1% |
 | backend/api/usecase_handler.py | 96.2% |
 | backend/llm_fetchers/ChatGPTProcessor.py | 90.0% |
 | backend/llm_fetchers/UseCaseProcessor.py | 78.6% |
