@@ -245,13 +245,49 @@ def get_mensa_info(canteen_name, min_ratio=0.6):
 
     
 #5. Stundenplan (StundenplanAPI)
-def get_rapla_scedule(user_id, semester):
-    url = f"https://rapla.dhbw.de/rapla/file=6Q0QSbNtpyeYPKQhnGFTaEN6AggaPdGgCFyhd5ANmjydX8WyDjUfLBh4YjDgat2dJd8as6Az5GGmQilBwJydDTQpeHfV6bTghpX2dlRU6RU5QsAKr6ARjgRj_BxZmmhVA3Tk_bSK4acN3oO7a7PkNAHTfszb0OA4_JMp8zdoYDY/user=inf22168@lehre.dhbw-stuttgart.de/day=today"
+def get_rapla_schedule(date):
+    url = f"http://rapla.satoqz.net/rapla/internal_calendar?key=6Q0QSbNtpyeYPKQhnGFTaEN6AggaPdGgCFyhd5ANmjydX8WyDjUfLBh4YjDgat2dJd8as6Az5GGmQilBwJydDTQpeHfV6bTghpX2dlRU6RU5QsAKr6ARjgRj_BxZmmhVA3Tk_bSK4acN3oO7a7PkNAHTfszb0OA4_JMp8zdoYDY&salt=648736798"
     response = requests.get(url)
+
+    ics_file = response.text
+
+    current_event = {}
+    events = {}
     
-    return response.json()
+    # Goes through all lines of the given ics file
 
+    for line in ics_file.splitlines():
+            line = line.strip()
+            if line.startswith("BEGIN:VEVENT"): # Looks where an event begins
+                current_event = {}
 
+            elif line.startswith("DTSTAMP:"): # Looks for the current date of the event and formats it to YYYY-MM-DD
+                timestamp = line.replace("DTSTAMP:", "").strip().split("T")[0]
+                current_event["timestamp"] = f"{timestamp[:4]}-{timestamp[4:6]}-{timestamp[6:]}"
+
+            elif line.startswith("SUMMARY:"):
+                current_event["summary"] = line.replace("SUMMARY:", "").strip()
+
+            elif line.startswith("DTSTART;TZID=Europe/Berlin:"):
+                start_time = line.replace("DTSTART;TZID=Europe/Berlin:", "").strip().split("T")[1]
+                current_event["start"] = f"{start_time[:2]}:{start_time[4:6]}"
+
+            elif line.startswith("DTEND;TZID=Europe/Berlin:"):
+                end_time = line.replace("DTEND;TZID=Europe/Berlin:", "").strip().split("T")[1]
+                current_event["end"] = f"{end_time[:2]}:{end_time[4:6]}"
+
+            elif line.startswith("LOCATION:"):
+                current_event["location"] = line.replace("LOCATION:", "").strip()
+                
+            elif line.startswith("END:VEVENT"): # Looks whrere the event ends
+                if "summary" in current_event and current_event["timestamp"] == date.strip(): # Checks if the current event date is the same as given date
+                    events[current_event["summary"]] = {
+                        "start": current_event.get("start"),
+                        "end": current_event.get("end"),
+                        "location": current_event.get("location"),
+                    }
+
+    return events
 
 # 6. Wegezeitberechnung (OpenRouteService)
 # Transport_Medium: "driving-car", "driving-hgv", "cycling-regular", "cycling-road", "cycling-mountain", "cycling-electric", "foot-walking", "foot-hiking", "wheelchair"
