@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from services import get_stock_price, get_news, get_weather ,get_meals_by_name_and_date
+from services import get_stock_price, get_news, get_weather, get_meals_by_name_and_date, get_hotels
 
 class TestServices(unittest.TestCase):
     @patch("services.requests.get")
@@ -139,41 +139,64 @@ class TestServices(unittest.TestCase):
         self.assertEqual(result, expected)
 
     @patch("services.requests.get")
-    def test_get_mensa_valid_location_and_date(self, mock_get):
+    def test_get_hotels_valid_location_and_date(self, mock_get):
 
         # Mocks a successful API response for a valid location and date
 
-        mock_get.side_effect = [
-            MagicMock(status_code=200, json=lambda: [
-                {
-                    "id": 1202,
-                    "name": "Mensa Central",
-                    "city": "Stuttgart"
-                }
-            ]),
-            MagicMock(status_code=200, json=lambda: [
-                {
-                    "name": "Gebackener Camembert mit Preiselbeeren und Salatganitur",
-                    "category": "Tellegericht II",
-                    "prices": {
-                        "students": "3.3"
-                    }
-                }
-            ])
-        ]
+        mock_get.return_value = MagicMock(status_code=200, json=lambda: [
+        {
+            "locationId": "11147",
+            "location": {
+                "name": "Berlin",
+                "country": "Germany",
+            },
+            "hotelName": "Park Inn",
+            "priceFrom": "231.78",
+            "stars": "4"
+        }
+        ])
 
-        # Tests the mensa function with a valid location and date
+        # Tests the hotels function with a valid location and date
 
-        result = get_meals_by_name_and_date("Mensa Central Stuttgart", "2025-04-09")
+        result = get_hotels("Berlin", "2025-04-09", "2025-04-10")
         expected = {
-            "Gebackener Camembert mit Preiselbeeren und Salatganitur": {
-                "category": "Tellegericht II",
-                "price": "3.3"
+            "Park Inn": {
+                "price": "231.78",
+                "stars": "4"
             }
         }
 
         self.assertEqual(result, expected)
+    
+    @patch("services.requests.get")
+    def test_get_hotels_invalid_location_and_valid_date(self, mock_get):
+        
+        # Mocks a successful API response for an invalid location and valid date
 
+        mock_get.return_value = MagicMock(status_code=200, json=lambda: [])
+
+        # Tests the hotels function with an invalid location and valid date
+
+        result = get_hotels("Invalid", "2025-04-09", "2025-04-10")
+        expected = {}
+        self.assertEqual(result, expected)
+
+    @patch("services.requests.get")
+    def test_get_hotels_valid_location_invalid_checkInDate(self, mock_get):
+
+        # Mocks a successful API response for a valid location and invalid check-In date
+
+        mock_get.return_value = MagicMock(status_code=200, json=lambda: {
+            "status": "error",
+            "errorCode": 2,
+            "message": "checkIn: Must be formatted like yyyy-MM-dd"
+        })
+
+        # Tests the hotels function with a valid location and invalid check-In date
+
+        result = get_hotels("Berlin", "25-04-09", "2025-04-10")
+        expected = {}
+        self.assertEqual(result, expected)
 
 if __name__ == "__main__":
     unittest.main()

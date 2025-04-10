@@ -200,31 +200,29 @@ def get_travel_time(transport_medium, start_location, end_location):
 # 7. Hotelsuche (Hotellook)
 def get_hotels(city, check_in, check_out):
 
-    location = city
-    limit=5
-
     url = "https://engine.hotellook.com/api/v2/cache.json"
     params = {
-        "location": location,
+        "location": city,
         "currency": "eur",
         "checkIn": check_in,
         "checkOut": check_out,
-        "limit": limit
+        "limit": 5
     }
 
     response = requests.get(url, params=params)
-    if response.status_code != 200:
-        return {"error": f"API-Fehler: {response.status_code} - {response.text}"}
 
-    data = response.json()
-    hotels = []
+    hotel_data = response.json()
 
-    for item in data:
-        hotels.append({
-            "name": item.get("hotelName", "Unbekannt"),
-            "price": item.get("priceFrom", "k.A."),
-            "stars": item.get("stars", "k.A.")
-        })
+    hotels = {}
+
+    for hotel in hotel_data:
+        if hotel_data.get("errorCode") == 2:
+            hotels = {}
+        else:
+                hotels[hotel.get("hotelName")]=({
+                "price": hotel.get("priceFrom", "keine Angabe"),
+                "stars": hotel.get("stars", "keine Angabe")
+            })
 
     return hotels
 
@@ -295,8 +293,8 @@ if __name__ == "__main__":
     #print("📈 1: Aktienkurs:", get_stock_price(["INVALID"]))
     #print("📰 2: Nachrichten:", get_news(["business"]))
     #print("🌤️ 3: Wetter:", get_weather(["Invalid"]))
-    print("🍽️ 4: Mensa:", get_meals_by_name_and_date("mensa ludwigsburg, ludwigsburg", "2025-04-09"))
+    #print("🍽️ 4: Mensa:", get_meals_by_name_and_date("mensa ludwigsburg, ludwigsburg", "2025-04-09"))
     #print("📅 5: Stundenplan:", get_rapla_scedule("doelker%40verwaltung.ba-stuttgart.de", "2025SS"))
     #print("🚗 6: Routenzeit:", get_travel_time("driving-car", "Stuttgart", "Hamburg"))
-    #print("🏨 7: Hotels:", get_hotels("Stuttgart", "2025-05-10", "2025-05-12"))
+    print("🏨 7: Hotels:", get_hotels("Berlin", "25-05-10", "2025-05-12"))
     #print("✈️ 8: Flugstatus:", get_flights("Stuttgart", "London", "2025-05-10", "2025-05-15"))
