@@ -31,6 +31,19 @@ class TestUseCaseProcessor(unittest.TestCase):
         # Reset the singleton instance in ChatGPTProcessor used by UseCaseProcessor
         ChatGPTProcessor._instance = None
 
+    def test_parse_response_failure(self):
+        processor = UseCaseProcessor()
+        invalid_literals = [
+            "not a valid literal",
+            "123abc",        
+            "{'key': 'value'", 
+        ]
+        for invalid in invalid_literals:
+            with self.subTest(invalid=invalid):
+                result = processor.parse_response(invalid)
+                # Expect the invalid input to be returned unmodified.
+                self.assertEqual(result, invalid)
+
     @patch("llm_fetchers.ChatGPTProcessor.OpenAI")
     def test_declare_usecase_success(self, mock_openai):
         # Create dummy use cases to simulate UseCases
@@ -99,13 +112,6 @@ class TestUseCaseProcessor(unittest.TestCase):
         processor = UseCaseProcessor()
         result = processor.response("User input", "API call data")
         self.assertEqual(result, "Response text")
-
-    def test_parse_response_failure(self):
-        processor = UseCaseProcessor()
-        invalid_response = "not a valid literal"  # ast.literal_eval will fail to parse this
-        result = processor.parse_response(invalid_response)
-        # Expect the invalid input to be returned unmodified.
-        self.assertEqual(result, invalid_response)
 
 if __name__ == "__main__":
     unittest.main()
