@@ -10,7 +10,7 @@
 
 ## Coverage
 
-![Coverage](https://img.shields.io/badge/Coverage-56.3%25-brightgreen)
+![Coverage](https://img.shields.io/badge/Coverage-58.9%25-brightgreen)
 
 | Datei | Coverage (%) |
 |---|---|
@@ -26,15 +26,15 @@
 | backend/llm_fetchers/UseCaseProcessor.py | 83.3% |
 | backend/service_fetchers/services.py | 48.5% |
 | frontend/api_client.py | 98.5% |
-| frontend/bot.py | 47.1% |
-| frontend/command_handlers.py | 56.2% |
+| frontend/bot.py | 100.0% |
+| frontend/command_handlers.py | 100.0% |
 | frontend/main.py | 84.6% |
-| frontend/message_handlers.py | 23.6% |
+| frontend/message_handlers.py | 34.5% |
 | frontend/pref_config.py | 100.0% |
-| frontend/pref_handler.py | 20.7% |
+| frontend/pref_handler.py | 21.8% |
 | frontend/speech_utils.py | 100.0% |
-| frontend/start_handler.py | 13.0% |
-| **Projekt** | **56.3%** |
+| frontend/start_handler.py | 14.0% |
+| **Projekt** | **58.9%** |
 
 ## API
 
