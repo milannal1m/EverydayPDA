@@ -10,9 +10,8 @@ from telegram.ext import (
 # Importiere alle Command Handler
 from command_handlers import configure_conversation_handlers
 from message_handlers import (
-    send_morning_message,
-    send_proactivity_message,
-    handle_incoming_message
+    handle_incoming_message,
+    configure_proactivity_jobs,
 )
 
 ##############################################
@@ -32,17 +31,7 @@ class BotApp:
         )
 
     def _configure_jobs(self):
-        self.application.job_queue.run_daily(
-            send_morning_message,
-            time=datetime.time(hour=21, minute=19, second=0),
-            name="morning_message"
-        )
-        self.application.job_queue.run_repeating(
-            send_proactivity_message,
-            interval=60,
-            first=0,
-            name="proactivity_message"
-        )
+        configure_proactivity_jobs(self.application)
 
     def run(self):
         self.application.run_polling()

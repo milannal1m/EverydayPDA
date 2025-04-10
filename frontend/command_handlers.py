@@ -133,7 +133,7 @@ async def initialize_transport(update: Update, context: CallbackContext):
             await query.edit_message_text(f"Dein bevorzugtes Transportmittel: {chosen_transport}")
             # Frage zum nächsten Schritt: Aktien
             await query.message.reply_text(
-                "Welche Lieblingsaktien hast du? (Bitte als Tickersymbole mit Komma getrennt angeben)"
+                "Welche Lieblingsaktien hast du? (Bitte mit Komma getrennt angeben z.B. Apple, Tesla)"
             )
             return STOCKS
         return TRANSPORT

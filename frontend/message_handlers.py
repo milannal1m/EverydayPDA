@@ -1,10 +1,11 @@
 import os
 import logging
+import datetime
 
 import speech_utils
 import api_client
 from telegram import Update
-from telegram.ext import ContextTypes, CallbackContext
+from telegram.ext import ContextTypes, CallbackContext, Application
 
 logger = logging.getLogger(__name__)
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -64,3 +65,20 @@ async def handle_incoming_message(update: Update, context: CallbackContext):
     voice_output_path = speech_utils.generate_voice_message(text)
     await update.message.reply_text(text)
     await update.message.reply_voice(voice=open(voice_output_path, "rb"))
+
+def configure_proactivity_jobs(application: Application):
+    morning_time = datetime.time(hour=21, minute=19, second=0)
+    proactivity_interval = 60  # seconds
+    
+    application.job_queue.run_daily(
+        send_morning_message,
+        time=morning_time,
+        name="morning_message"
+    )
+    application.job_queue.run_repeating(
+        send_proactivity_message,
+        interval=proactivity_interval,
+        first=0,
+        name="proactivity_message"
+    )
+
