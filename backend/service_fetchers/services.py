@@ -56,10 +56,10 @@ def get_stock_price(stock_names):
         if response.json().get("code") == 400:
             continue
         else:
-            # Filters symbol, price, and timestamp
+            # Filters price, timestamp and hourly change
             stocks[stock_name] = {
                 "price": stock.get("values", [{}])[0].get("close"),
-                "datetime": stock.get("values", [{}])[0].get("datetime"),
+                "timestamp": stock.get("values", [{}])[0].get("datetime"),
                 "changeFrom1hour": stock.get("change"),
             }
 
