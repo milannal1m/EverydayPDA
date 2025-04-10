@@ -46,7 +46,6 @@ class CommandHandlers:
             fallbacks=[]
         )
 
-        # ConversationHandler in der Application registrieren
         application.add_handler(init_handler)
         application.add_handler(update_handler)
         application.add_handler(CommandHandler("showpref", self.pref_handler.show_preferences))
