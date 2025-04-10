@@ -1,7 +1,7 @@
 import requests
 import os
 from dotenv import load_dotenv
-#from geopy.geocoders import Nominatim
+from geopy.geocoders import Nominatim
 import time
 import difflib
 
@@ -16,9 +16,15 @@ OPENROUTE_API_KEY = os.getenv("OPENROUTE_API_KEY")
 AVIATION_STACK_API_KEY = os.getenv("AVIATION_STACK_API_KEY")
 
 # 1. Stocks (Twelve Data)
-# Retrieves current stock prices using company names.
-# Input: stock_names (list of str) – company names (e.g., "Apple", "Google")
-# Output: dict – contains price, datetime, and hourly change per company
+#
+# Parameters:
+# - stock_names (list of str): Company names (e.g., ["Apple", "Google"])
+#
+# Returns:
+# - dict: Maps each company name to a dict with:
+#     - "price" (str): Latest stock price
+#     - "timestamp" (str): Datetime of the latest price
+#     - "changeFrom1hour" (str): Price change from one hour ago
 def get_stock_price(stock_names):
     stocks = {}
 
@@ -66,56 +72,87 @@ def get_stock_price(stock_names):
     return stocks
 
 
-
-# 2. Nachrichten (NewsAPI)
-# Categories: business, entertainment, general, health, science, sports, technology
+# 2. News (NewsAPI)
+#
+# Parameters:
+# - categories (list of str): News categories to query. Must be one or more of:
+#     "business", "entertainment", "general", "health", "science", "sports", "technology"
+#
+# Returns:
+# - dict: Maps each category to a list of articles, where each article contains:
+#     - "title" (str): Headline of the article
+#     - "source" (str): URL of the article
+#     - "publishedAt" (str): Publication datetime in ISO format
 def get_news(categories):
     news = {}
 
     for category in categories:
-        url = f"https://newsapi.org/v2/top-headlines?category={category}&pageSize=1&apiKey={NEWS_API_KEY}"
+        url = (
+            f"https://newsapi.org/v2/top-headlines"
+            f"?category={category}&pageSize=1&apiKey={NEWS_API_KEY}"
+        )
         response = requests.get(url)
         articles = response.json().get("articles", [])
 
         if response.json().get("totalResults") == 0:
-            news = {}
-        else:
-            # Adds the category to the news dictionary
-            if category not in news:
-                news[category] = []
+            continue
 
-            # Filters out the articles title and url
-            for article in articles:
-                news[category].append({ 
-                    "title": article.get("title"),
-                    "source": article.get("url"),
-                    "publishedAt": article.get("publishedAt"),
-                })
+        if category not in news:
+            news[category] = []
+
+        # Extracts article title, URL, and publication date
+        for article in articles:
+            news[category].append({
+                "title": article.get("title"),
+                "source": article.get("url"),
+                "publishedAt": article.get("publishedAt"),
+            })
 
     return news
 
 
-# 3. Wetter (WeatherAPI)
+# 3. Weather (WeatherAPI)
+#
+# Parameters:
+# - cities (list of str): List of city names (e.g., ["Berlin", "Paris", "New York"])
+#
+# Returns:
+# - dict: Maps each city to a dict with:
+#     - "temperature" (float): Current temperature in °C
+#     - "feelslike" (float): Feels-like temperature in °C
+#     - "max_temp" (float): Forecasted max temperature for the day in °C
+#     - "min_temp" (float): Forecasted min temperature for the day in °C
 def get_weather(cities):
-    weatherCities = {}
+    weather_cities = {}
 
     for city in cities:
-        url = f"http://api.weatherapi.com/v1/current.json&/forecast.json?key={WEATHER_API_KEY}&q={city}"
+        url = (
+            f"http://api.weatherapi.com/v1/forecast.json"
+            f"?key={WEATHER_API_KEY}&q={city}"
+        )
         response = requests.get(url)
         condition = response.json()
 
-        if response.json().get("error", {}).get("message") == "No matching location found.":
-            weatherCities = {}
-        else:
-            # Filters out the locations name, temperature and feelslike temperature
-            weatherCities[city] = {
-                    "temperature": condition.get("current", {}).get("temp_c"),
-                    "feelslike": condition.get("current", {}).get("feelslike_c"),
-                    "max_temp": condition.get("forecast", {}).get("forecastday", [{}])[0].get("day", {}).get("maxtemp_c"),
-                    "min_temp": condition.get("forecast", {}).get("forecastday", [{}])[0].get("day", {}).get("mintemp_c"),
-                } 
-               
-    return weatherCities
+        if condition.get("error", {}).get("message") == "No matching location found.":
+            continue
+
+        weather_cities[city] = {
+            "temperature": condition.get("current", {}).get("temp_c"),
+            "feelslike": condition.get("current", {}).get("feelslike_c"),
+            "max_temp": condition
+                .get("forecast", {})
+                .get("forecastday", [{}])[0]
+                .get("day", {})
+                .get("maxtemp_c"),
+            "min_temp": condition
+                .get("forecast", {})
+                .get("forecastday", [{}])[0]
+                .get("day", {})
+                .get("mintemp_c"),
+        }
+
+    return weather_cities
+
 
 
 # 4. Cafeteria (CafeteriaAPI)
@@ -263,7 +300,6 @@ def get_travel_time(transport_medium, start_location, end_location):
 
 # 7. Hotelsuche (Hotellook)
 def get_hotels(city, check_in, check_out):
-
     url = "https://engine.hotellook.com/api/v2/cache.json"
     params = {
         "location": city,
@@ -274,21 +310,22 @@ def get_hotels(city, check_in, check_out):
     }
 
     response = requests.get(url, params=params)
-
     hotel_data = response.json()
 
-    hotels = {}
+    # Fehlerprüfung, wenn hotel_data ein Fehlerobjekt ist
+    if isinstance(hotel_data, dict) and hotel_data.get("errorCode") == 2:
+        return {}
 
+    hotels = {}
     for hotel in hotel_data:
-        if hotel_data.get("errorCode") == 2:
-            hotels = {}
-        else:
-                hotels[hotel.get("hotelName")]=({
-                "price": hotel.get("priceFrom", "keine Angabe"),
-                "stars": hotel.get("stars", "keine Angabe")
-            })
+        hotels[hotel.get("hotelName")] = {
+            "price": hotel.get("priceFrom", "keine Angabe"),
+            "stars": hotel.get("stars", "keine Angabe")
+        }
 
     return hotels
+
+
 
 
 # 8. Fluginformationen (AviationStack)
@@ -355,10 +392,10 @@ def get_flights(origin_city, destination_city, departure_date, return_date):
 # --- Testaufrufe ---
 if __name__ == "__main__":
     print("📈 1: Aktienkurs:", get_stock_price(["Siemens AG"]))
-    #print("📰 2: Nachrichten:", get_news(["business"]))
-    #print("🌤️ 3: Wetter:", get_weather(["Invalid"]))
+    print("📰 2: Nachrichten:", get_news(["technology"]))
+    print("🌤️ 3: Wetter:", get_weather(["Stuttgart"]))
     #print("🍽️ 4: Mensa:", get_mensa_info("mensa ludwigsburg, ludwigsburg", "2025-04-09"))
     print("📅 5: Stundenplan:", get_rapla_schedule("2025-04-07"))
     #print("🚗 6: Routenzeit:", get_travel_time("driving-car", "Stuttgart", "Hamburg"))
-    #print("🏨 7: Hotels:", get_hotels("Berlin", "25-05-10", "2025-05-12"))
-    #print("✈️ 8: Flugstatus:", get_flights("Stuttgart", "London", "2025-05-10", "2025-05-15"))
+    print("🏨 7: Hotels:", get_hotels("Berlin", "2025-05-10", "2025-05-12"))
+    #print("✈️ 8: Flugstatus:", get_flights("Stuttgart", "Hamburg", "2025-05-10", "2025-05-15"))
