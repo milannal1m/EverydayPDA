@@ -2,6 +2,7 @@ import requests
 import os
 from dotenv import load_dotenv
 from geopy.geocoders import Nominatim
+from datetime import datetime
 import time
 import difflib
 
@@ -15,6 +16,32 @@ WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
 OPENROUTE_API_KEY = os.getenv("OPENROUTE_API_KEY")
 AVIATION_STACK_API_KEY = os.getenv("AVIATION_STACK_API_KEY")
 
+def is_valid_date(date_string):
+
+    try:
+
+        datetime.strptime(date_string, "%Y-%m-%d")
+
+        return date_string
+
+    except ValueError:
+
+        try:
+
+            parsed_date = datetime.strptime(date_string, "%d.%m.%Y")
+
+            return parsed_date.strftime("%Y-%m-%d")
+
+        except ValueError:
+
+                current_year = datetime.now().year
+
+                date_with_year = f"{date_string}{current_year}"
+
+                parsed_date = datetime.strptime(date_with_year, "%d.%m.%Y")
+
+                return parsed_date.strftime("%Y-%m-%d")
+        
 # 1. Stocks (Twelve Data)
 #
 # Parameters:
@@ -277,6 +304,7 @@ def get_rapla_schedule(dates):
 
     # Iterates through all lines of the given ICS file
     for date in dates:
+        is_valid_date(date)
         for line in ics_file.splitlines():
             line = line.strip()
 
