@@ -1,6 +1,3 @@
-import datetime
-
-
 from telegram.ext import (
     Application,
     MessageHandler,
@@ -8,7 +5,7 @@ from telegram.ext import (
 )
 
 # Importiere alle Command Handler
-from command_handlers import configure_conversation_handlers
+from command_handlers import CommandHandlers
 from message_handlers import (
     handle_incoming_message,
     configure_proactivity_jobs,
@@ -25,7 +22,8 @@ class BotApp:
         self._configure_jobs()
 
     def _configure_handlers(self):
-        configure_conversation_handlers(self.application)
+        cmd = CommandHandlers()
+        cmd.configure_conversation_handlers(self.application)
         self.application.add_handler(
             MessageHandler((filters.TEXT & ~filters.COMMAND) | filters.VOICE, handle_incoming_message)
         )

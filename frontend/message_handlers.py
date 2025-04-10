@@ -68,7 +68,7 @@ async def handle_incoming_message(update: Update, context: CallbackContext):
 
 def configure_proactivity_jobs(application: Application):
     morning_time = datetime.time(hour=21, minute=19, second=0)
-    proactivity_interval = 60  # seconds
+    proactivity_interval = 600  # seconds
     
     application.job_queue.run_daily(
         send_morning_message,
