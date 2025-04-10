@@ -2,8 +2,8 @@ import logging
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
-    ConversationHandler,
-    CallbackContext
+    ConversationHandler, CommandHandler, MessageHandler,
+    CallbackContext, CallbackQueryHandler, filters
 )
 
 import api_client
@@ -392,3 +392,37 @@ async def process_preference_button_click(update: Update, context: CallbackConte
         return await ask_user_for_preference_change(
             update, context, NEWS_ADD, "Welche Nachrichtenthemen möchtest du hinzufügen?"
         )
+
+def configure_conversation_handlers(application):
+    init_handler = ConversationHandler(
+        entry_points=[CommandHandler("start", start_initialization)],
+        states={
+            COURSE: [MessageHandler(filters.TEXT & ~filters.COMMAND, initialize_course)],
+            CAFETERIA: [MessageHandler(filters.TEXT & ~filters.COMMAND, initialize_cafeteria)],
+            CITY: [MessageHandler(filters.TEXT & ~filters.COMMAND, initialize_city)],
+            TRANSPORT: [CallbackQueryHandler(initialize_transport, pattern=r"^transport:")],
+            STOCKS: [MessageHandler(filters.TEXT & ~filters.COMMAND, initialize_stocks)],
+            NEWS: [CallbackQueryHandler(initialize_news, pattern=r"^news:")],
+        },
+        fallbacks=[]
+    )
+
+    update_handler = ConversationHandler(
+        entry_points=[CommandHandler("changepref", start_change_preferences)],
+        states={
+            BUTTON: [CallbackQueryHandler(process_preference_button_click)],
+            COURSE_UPDATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, change_course)],
+            CAFETERIA_UPDATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, change_cafeteria)],
+            CITY_UPDATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, change_city)],
+            TRANSPORT_UPDATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, change_transport)],
+            STOCKS_DELETE: [MessageHandler(filters.TEXT & ~filters.COMMAND, remove_stocks)],
+            STOCKS_ADD: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_stocks)],
+            NEWS_DELETE: [MessageHandler(filters.TEXT & ~filters.COMMAND, remove_news)],
+            NEWS_ADD: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_news)],
+        },
+        fallbacks=[]
+    )
+
+    application.add_handler(init_handler)
+    application.add_handler(update_handler)
+    application.add_handler(CommandHandler("showpref", show_preferences))
