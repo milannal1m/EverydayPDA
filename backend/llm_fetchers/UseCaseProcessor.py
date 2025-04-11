@@ -64,7 +64,7 @@ class UseCaseProcessor(ChatGPTProcessor):
             f"These are the required fields: {information_needed}. "
             f"Here's the user input: {user_input}. "
             "If the input isn't in English, internally translate it. "
-            "Only return the single plain text string with the extracted information. If nothing is found, return an empty string." 
+            "Only return the single plain text string with the extracted information. Please try as hard as possbile to categories it but of course if nothing is found, return an empty string." 
         )
         structured = self.process_input_with_context(user_input, context, UseCaseInformation)
         parsed_info = self.parse_response(structured.info)
@@ -87,17 +87,30 @@ class UseCaseProcessor(ChatGPTProcessor):
         return self.process_input(prompt)
 
 if __name__ == "__main__":
-    user_input = "Gebe mir Techology News"
+    user_input = "Gebe mir bitte die neusten Nachrichten zu Aktien. und ich möchte wissen, wie ich zur Arbeit komme nach Stuttgart?"
+    user_input = "Was gibt es neues in Gesundheit?"
     #user_input = "Ich möchte mit dem Auto zur Arbeit?"
     information_needed = "Stocks, News Services, City, Cafeteria Name, Course Name, Transport Medium, Destination, Check-in Date, Check-out Date, Departure Date, Return Date"
     #information_needed_extracted = "driving-car, driving-hgv, cycling-regular, cycling-road, cycling-mountain, cycling-electric, foot-walking, foot-hiking, wheelchair"
-    information_needed_extracted = "buisness, entertainment, family, friends, work, study, technology"
 
     processor = UseCaseProcessor()
     use_case = processor.declare_usecase(user_input)
     info = processor.get_information(user_input, information_needed)
-    extracted = processor.extract_specific_information(user_input, information_needed_extracted)
+    if 2 in use_case:
+        news_topic_options = ", ".join(Informations.NEWS_CATEGORY.value)
+        news_topic = processor.extract_specific_information(user_input, news_topic_options)
+        if news_topic:
+            info["News-Topic"] = [news_topic]
+    else:
+        news_topic = ""
+    if 6 in use_case:
+        travel_medium_options = ", ".join(Informations.TRAVEL_MEDIUM.value)
+        travel_medium = processor.extract_specific_information(user_input, travel_medium_options)
+        if travel_medium:
+            info["Transport-Medium"] = [travel_medium]
+    else:
+        travel_medium = ""
 
     print(use_case)  # e.g., [1, 5]
     print(info)      # e.g., {'Stocks': [''], 'News Services': [''], 'City': [''], 'Cafeteria Name': [''], 'Course Name': [''], 'Transport Medium': [''], 'Destination': [''], 'Check-in Date': [''], 'Check-out Date': [''], 'Departure Date': [''], 'Return Date': ['']}
-    print(extracted)  # e.g., 'driving-car'
+    print(news_topic, travel_medium)  # e.g., 'driving-car'

@@ -1,5 +1,6 @@
 import os
 import sys
+import asyncio
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from llm_fetchers.UseCaseProcessor import UseCaseProcessor
@@ -44,3 +45,17 @@ class UseCaseHandler:
 
     def get_response(self, message, api_data):
         return UseCaseProcessor().response(message, api_data)
+    
+if __name__ == "__main__":
+    async def main():
+        handler = UseCaseHandler()
+        message = "Was gibt es neues?"
+        user_id = "user123"
+        use_cases, info = await handler.get_use_cases_and_info(message, user_id)
+        print(f"Use Cases: {use_cases}, Info: {info}")
+        api_data = handler.call_apis(use_cases, info)
+        print(f"API Data: {api_data}")
+        response = handler.get_response(message, api_data)
+        print(f"Response: {response}")
+
+    asyncio.run(main())
