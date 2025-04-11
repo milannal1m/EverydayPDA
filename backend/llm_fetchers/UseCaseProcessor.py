@@ -5,6 +5,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from UseCases import UseCases
+from Informations import Informations
 from llm_fetchers.ChatGPTProcessor import ChatGPTProcessor
 
 from pydantic import BaseModel
@@ -15,6 +16,9 @@ class UseCaseSelection(BaseModel):
 
 class ExtractedInformation(BaseModel):
     info: Dict[str, List[str]]
+
+class UseCaseInformation(BaseModel):
+    info: str
 
 class UseCaseProcessor(ChatGPTProcessor):
     def __init__(self):
@@ -55,6 +59,25 @@ class UseCaseProcessor(ChatGPTProcessor):
     # Merge the list of information provided by the prompt and preferences
     # Execute the API calls to fetch the required information
 
+    def extract_specific_information(self, user_input: str, information_needed: str) -> dict:
+        context = (
+            f"These are the required fields: {information_needed}. "
+            f"Here's the user input: {user_input}. "
+            "If the input isn't in English, internally translate it. "
+            "Only return the single plain text string with the extracted information. If nothing is found, return an empty string." 
+        )
+        structured = self.process_input_with_context(user_input, context, UseCaseInformation)
+        parsed_info = self.parse_response(structured.info)
+        # Ensure we work with a plain string
+        if isinstance(parsed_info, str):
+            extracted = parsed_info.strip()
+            allowed = [word for info in Informations for word in info.value]
+            extracted_lower = extracted.lower()
+            for word in allowed:
+                if word.lower() in extracted_lower:
+                    return word
+        return ""
+
     def response(self, user_input: str, api_calls: str) -> str:
         prompt = (
             f"Here is the information provided by the API calls: {api_calls}. "
@@ -64,12 +87,17 @@ class UseCaseProcessor(ChatGPTProcessor):
         return self.process_input(prompt)
 
 if __name__ == "__main__":
-    user_input = "Wie lange habe ich heute Uni und wie steht es heute um den Kurs von Microsoft?"
+    user_input = "Gebe mir Techology News"
+    #user_input = "Ich möchte mit dem Auto zur Arbeit?"
     information_needed = "Stocks, News Services, City, Cafeteria Name, Course Name, Transport Medium, Destination, Check-in Date, Check-out Date, Departure Date, Return Date"
+    #information_needed_extracted = "driving-car, driving-hgv, cycling-regular, cycling-road, cycling-mountain, cycling-electric, foot-walking, foot-hiking, wheelchair"
+    information_needed_extracted = "buisness, entertainment, family, friends, work, study, technology"
 
     processor = UseCaseProcessor()
     use_case = processor.declare_usecase(user_input)
     info = processor.get_information(user_input, information_needed)
+    extracted = processor.extract_specific_information(user_input, information_needed_extracted)
 
     print(use_case)  # e.g., [1, 5]
     print(info)      # e.g., {'Stocks': [''], 'News Services': [''], 'City': [''], 'Cafeteria Name': [''], 'Course Name': [''], 'Transport Medium': [''], 'Destination': [''], 'Check-in Date': [''], 'Check-out Date': [''], 'Departure Date': [''], 'Return Date': ['']}
+    print(extracted)  # e.g., 'driving-car'
