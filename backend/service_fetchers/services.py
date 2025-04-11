@@ -14,34 +14,28 @@ TWELVE_DATA_API_KEY = os.getenv("TWELVE_DATA_API_KEY")
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
 OPENROUTE_API_KEY = os.getenv("OPENROUTE_API_KEY")
-AVIATION_STACK_API_KEY = os.getenv("AVIATION_STACK_API_KEY")
+AMADEUS_CLIENT_ID = os.getenv("AMADEUS_CLIENT_ID")
+AMADEUS_CLIENT_SECRET = os.getenv("AMADEUS_CLIENT_SECRET")
+X_RAPLA_API_KEY = os.getenv("X_RAPLA_API_KEY")
+
 
 def is_valid_date(date_string):
-
     try:
-
         datetime.strptime(date_string, "%Y-%m-%d")
-
         return date_string
 
     except ValueError:
-
         try:
-
             parsed_date = datetime.strptime(date_string, "%d.%m.%Y")
-
             return parsed_date.strftime("%Y-%m-%d")
 
         except ValueError:
-
                 current_year = datetime.now().year
-
                 date_with_year = f"{date_string}{current_year}"
-
                 parsed_date = datetime.strptime(date_with_year, "%d.%m.%Y")
-
                 return parsed_date.strftime("%Y-%m-%d")
         
+
 # 1. Stocks (Twelve Data)
 #
 # Parameters:
@@ -437,96 +431,99 @@ def get_hotels(city_list, checkin_list, checkout_list):
     return hotels
 
 
-# 8. Flight Information (AviationStack)
+# 8. Flight Search (Amadeus API)
 #
 # Parameters:
-# - origin_city (list of str): A list containing the origin city name (e.g., "Stuttgart")
-# - destination_city (list of str): A list containing the destination city name (e.g., "Hamburg")
-# - departure_date (list of str): A list containing the departure date in "YYYY-MM-DD" format (e.g., "2025-05-10")
-# - return_date (list of str): A list containing the return date in "YYYY-MM-DD" format (e.g., "2025-05-15")
+#   - origin_city (list[str]): Departure city, e.g. ["Stuttgart"]
+#   - destination_city (list[str]): Arrival city, e.g. ["Hamburg"]
+#   - departure_date (list[str]): Departure date, format "YYYY-MM-DD"
+#   - return_date (list[str], optional): Return date, format "YYYY-MM-DD"
 #
 # Returns:
-# - dict: If successful:
-#     - "flight_name" (str): Flight IATA code or "Unknown"
-#     - "departure" (str): Estimated departure time or "N/A"
-#     - "arrival" (str): Estimated arrival time or "N/A"
-#     - "price" (str): Flight price or "N/A"
-#   If error:
-#     - "error" (str): Error message
-
-def get_flights(origin_city, destination_city, departure_date, return_date):
-    def get_iata_code(city_name):
-        # API endpoint for airport search
-        url = f"https://api.aviationstack.com/v1/airports"
-        params = {
-            "access_key": AVIATION_STACK_API_KEY,
-            "city": city_name
+#   - dict: Contains flight details (max. 3 flights) or error message
+def get_flights(origin_city, destination_city, departure_date, return_date=None):
+    def get_access_token():
+        # Obtain OAuth2 token from Amadeus API.
+        url = "https://test.api.amadeus.com/v1/security/oauth2/token"
+        payload = {
+            "grant_type": "client_credentials",
+            "client_id": AMADEUS_CLIENT_ID,
+            "client_secret": AMADEUS_CLIENT_SECRET
         }
+        response = requests.post(url, data=payload)
+        response.raise_for_status()
+        return response.json().get("access_token")
 
-        response = requests.get(url, params=params)
+    def city_to_iata(city_name, token):
+        """Resolve city name to IATA code via Amadeus location API."""
+        url = "https://test.api.amadeus.com/v1/reference-data/locations"
+        params = {"keyword": city_name, "subType": "AIRPORT"}
+        headers = {"Authorization": f"Bearer {token}"}
+        response = requests.get(url, headers=headers, params=params)
 
-        if response.status_code != 200:
-            return None
-
+        response.raise_for_status()
         data = response.json()
+
         if not data.get("data"):
-            return None
+            raise ValueError(f"No IATA code found for city: {city_name}")
 
-        # The first match (usually the main airport of the city)
-        airport = data["data"][0]
-        return airport.get("iata_code", None)
+        return data["data"][0]["iataCode"]
 
-    origin_iata = get_iata_code(origin_city[0])
-    destination_iata = get_iata_code(destination_city[0])
+    try:
+        token = get_access_token()
+        origin_iata = city_to_iata(origin_city[0], token)
+        destination_iata = city_to_iata(destination_city[0], token)
+    except Exception as e:
+        return {"error": str(e)}
 
-    if not origin_iata or not destination_iata:
-        return {"error": "Invalid city/airport entered."}
-
-    # Ensure the date format is correct: "YYYY-MM-DD"
-    departure_date_str = departure_date[0]
-    return_date_str = return_date[0] if return_date else None
-
-    # API endpoint for flight information
-    url = "https://api.aviationstack.com/v1/flights"
+    url = "https://test.api.amadeus.com/v2/shopping/flight-offers"
     params = {
-        "access_key": AVIATION_STACK_API_KEY,
-        "departure_iata": origin_iata,     # IATA code of the origin
-        "arrival_iata": destination_iata,  # IATA code of the destination
-        "departure_date": departure_date_str,  # Format: "YYYY-MM-DD"
-        "return_date": return_date_str         # Format: "YYYY-MM-DD" (optional)
+        "originLocationCode": origin_iata,
+        "destinationLocationCode": destination_iata,
+        "departureDate": departure_date[0],
+        "adults": 1,
+        "currencyCode": "EUR",
+        "max": 3
     }
 
-    response = requests.get(url, params=params)
+    if return_date:
+        params["returnDate"] = return_date[0]
+
+    headers = {"Authorization": f"Bearer {token}"}
+    response = requests.get(url, headers=headers, params=params)
 
     if response.status_code != 200:
-        return {"error": f"API error: {response.status_code} - {response.text}"}
+        return {
+            "error": f"API request failed: {response.status_code}",
+            "details": response.text
+        }
 
     data = response.json()
     if not data.get("data"):
-        return {"error": "No flights found."}
+        return {"error": "No flight data available."}
 
     flights = []
-    max_results = 3  # Limit to first 3 flights
-    for flight in data["data"][:max_results]:
+    for flight in data["data"][:3]:
+        segment = flight["itineraries"][0]["segments"][0]
         flights.append({
-            "flight_name": flight.get("flight", {}).get("iata", "Unknown"),
-            "departure": flight.get("departure", {}).get("estimated", "N/A"),
-            "arrival": flight.get("arrival", {}).get("estimated", "N/A"),
-            "price": flight.get("price", {}).get("total", "N/A")  # If available
+            "flight_number": segment["carrierCode"],
+            "airline": segment["carrierCode"],
+            "departure": segment["departure"]["at"],
+            "arrival": segment["arrival"]["at"],
+            "price": flight["price"]["grandTotal"]
         })
 
-    return flights
-
+    return {"flights": flights}
 
 
 
 # --- Testaufrufe ---
 if __name__ == "__main__":
-    #print("📈 1: Aktienkurs:", get_stock_price(["Siemens AG"]))
-    #print("📰 2: Nachrichten:", get_news(["business"]))
-    #print("🌤️ 3: Wetter:", get_weather(["Stuttgart"]))
-    #print("🍽️ 4: Mensa:", get_canteen_info(["Mensa Central"]))
-    #print("📅 5: Stundenplan:", get_rapla_schedule(["2025-04-15"]))
-    #print("🚗 6: Routenzeit:", get_travel_info(["driving-car"], ["Stuttgart"], ["Hamburg"]))
-    #print("🏨 7: Hotels:", get_hotels(["Berlin"], ["2025-05-10"], ["2025-05-12"]))
+    print("📈 1: Aktienkurs:", get_stock_price(["Siemens AG"]))
+    print("📰 2: Nachrichten:", get_news(["technology"]))
+    print("🌤️ 3: Wetter:", get_weather(["Stuttgart"]))
+    print("🍽️ 4: Mensa:", get_canteen_info(["Mensa Central"]))
+    print("📅 5: Stundenplan:", get_rapla_schedule(["2025-04-15"]))
+    print("🚗 6: Routenzeit:", get_travel_info(["driving-car"], ["Stuttgart"], ["Hamburg"]))
+    print("🏨 7: Hotels:", get_hotels(["Berlin"], ["2025-05-10"], ["2025-05-12"]))
     print("✈️ 8: Flugstatus:", get_flights(["Stuttgart"], ["Hamburg"], ["2025-05-10"], ["2025-05-15"]))
