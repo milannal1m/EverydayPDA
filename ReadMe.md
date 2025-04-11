@@ -10,7 +10,7 @@
 
 ## Coverage
 
-![Coverage](https://img.shields.io/badge/Coverage-87.3%25-brightgreen)
+![Coverage](https://img.shields.io/badge/Coverage-86.8%25-brightgreen)
 
 | Datei | Coverage (%) |
 |---|---|
@@ -30,9 +30,9 @@
 | backend/service_fetchers/flight_service.py | 94.1% |
 | backend/service_fetchers/helpers.py | 100.0% |
 | backend/service_fetchers/hotel_service.py | 100.0% |
-| backend/service_fetchers/news_service.py | 100.0% |
+| backend/service_fetchers/news_service.py | 87.5% |
 | backend/service_fetchers/rapla_service.py | 100.0% |
-| backend/service_fetchers/stock_service.py | 100.0% |
+| backend/service_fetchers/stock_service.py | 85.3% |
 | backend/service_fetchers/traveltime_service.py | 100.0% |
 | backend/service_fetchers/weather_service.py | 100.0% |
 | frontend/api_client.py | 98.5% |
@@ -43,7 +43,7 @@
 | frontend/pref_handler.py | 59.8% |
 | frontend/speech_utils.py | 100.0% |
 | frontend/start_handler.py | 75.0% |
-| **Projekt** | **87.3%** |
+| **Projekt** | **86.8%** |
 
 ## API
 
