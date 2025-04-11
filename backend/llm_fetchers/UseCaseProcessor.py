@@ -64,7 +64,7 @@ class UseCaseProcessor(ChatGPTProcessor):
             f"These are the required fields: {information_needed}. "
             f"Here's the user input: {user_input}. "
             "If the input isn't in English, internally translate it. "
-            "Only return the single plain text string with the extracted information. If nothing is found, return an empty string." 
+            "Only return the single plain text string with the extracted information. Please try as hard as possbile to categories it but of course if nothing is found, return an empty string." 
         )
         structured = self.process_input_with_context(user_input, context, UseCaseInformation)
         parsed_info = self.parse_response(structured.info)
@@ -87,7 +87,7 @@ class UseCaseProcessor(ChatGPTProcessor):
         return self.process_input(prompt)
 
 if __name__ == "__main__":
-    user_input = "Gebe mir Techology News"
+    user_input = "Gebe mir bitte die neusten Nachrichten zu Aktien. und ich möchte wissen, wie ich zur Arbeit komme nach Stuttgart?"
     #user_input = "Ich möchte mit dem Auto zur Arbeit?"
     information_needed = "Stocks, News Services, City, Cafeteria Name, Course Name, Transport Medium, Destination, Check-in Date, Check-out Date, Departure Date, Return Date"
     #information_needed_extracted = "driving-car, driving-hgv, cycling-regular, cycling-road, cycling-mountain, cycling-electric, foot-walking, foot-hiking, wheelchair"
