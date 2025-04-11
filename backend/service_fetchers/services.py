@@ -18,22 +18,25 @@ AMADEUS_CLIENT_ID = os.getenv("AMADEUS_CLIENT_ID")
 AMADEUS_CLIENT_SECRET = os.getenv("AMADEUS_CLIENT_SECRET")
 X_RAPLA_API_KEY = os.getenv("X_RAPLA_API_KEY")
 
-
+# Helper-function to check if a date is valid and convert it to the format YYYY-MM-DD
 def is_valid_date(date_string):
     try:
+        # Checks if date is in format YYYY-MM-DD
         datetime.strptime(date_string, "%Y-%m-%d")
         return date_string
 
     except ValueError:
         try:
+            # Checks if date is in format DD.MM.YYYY
             parsed_date = datetime.strptime(date_string, "%d.%m.%Y")
             return parsed_date.strftime("%Y-%m-%d")
 
         except ValueError:
-                current_year = datetime.now().year
-                date_with_year = f"{date_string}{current_year}"
-                parsed_date = datetime.strptime(date_with_year, "%d.%m.%Y")
-                return parsed_date.strftime("%Y-%m-%d")
+            # If Year is missing, append the current year
+            current_year = datetime.now().year
+            date_with_year = f"{date_string}{current_year}"
+            parsed_date = datetime.strptime(date_with_year, "%d.%m.%Y")
+            return parsed_date.strftime("%Y-%m-%d")
         
 
 # 1. Stocks (Twelve Data)
@@ -61,7 +64,6 @@ def get_stock_price(stock_names):
             continue  # Skip if no match found
 
         symbol = data["data"][0].get("symbol")
-        #print(f"Symbol: {symbol}")
 
         # Get latest 1min time series
         url = (
@@ -243,9 +245,6 @@ def get_canteen_info(canteen_names):
 
         # Find the best match based on the weighted matching
         canteen_id = weighted_match(normalized_input, candidates, min_ratio)
-
-        #print(f"Best match for '{canteen_name}': {canteen_id}")  # DEBUGGING
-
         if not canteen_id:
             all_menus[canteen_name] = {"error": "Kantine nicht gefunden."}
             continue
@@ -298,7 +297,7 @@ def get_rapla_schedule(dates):
 
     # Iterates through all lines of the given ICS file
     for date in dates:
-        is_valid_date(date)
+        date = is_valid_date(date)
         for line in ics_file.splitlines():
             line = line.strip()
 
@@ -394,8 +393,8 @@ def get_travel_info(transport_medium, start_location, end_location):
 #
 # Parameters:
 # - city_list (list): City name as first element, e.g. ["Berlin"]
-# - checkin_list (list): Check-in date (YYYY-MM-DD), e.g. ["2025-05-10"]
-# - checkout_list (list): Check-out date (YYYY-MM-DD), e.g. ["2025-05-12"]
+# - checkin_list (list): Check-in date (YYYY-MM-DD, DD.MM.YYYY, DD.MM.YY, DD.MM.), e.g. ["2025-05-10"]
+# - checkout_list (list): Check-out date (YYYY-MM-DD, DD.MM.YYYY, DD.MM.YY, DD.MM.), e.g. ["2025-05-12"]
 #
 # Returns:
 # - dict: hotels – contains hotel name as key and:
@@ -403,8 +402,10 @@ def get_travel_info(transport_medium, start_location, end_location):
 #     - "stars" (int or str): Star rating or "keine Angabe"
 def get_hotels(city_list, checkin_list, checkout_list):
     city = city_list[0]
-    check_in = checkin_list[0]
-    check_out = checkout_list[0]
+    
+    # Changing dates into correct format
+    check_in = is_valid_date(checkin_list[0])
+    check_out = is_valid_date(checkout_list[0])
 
     url = "https://engine.hotellook.com/api/v2/cache.json"
     params = {
@@ -436,14 +437,13 @@ def get_hotels(city_list, checkin_list, checkout_list):
 # Parameters:
 #   - origin_city (list[str]): Departure city, e.g. ["Stuttgart"]
 #   - destination_city (list[str]): Arrival city, e.g. ["Hamburg"]
-#   - departure_date (list[str]): Departure date, format "YYYY-MM-DD"
-#   - return_date (list[str], optional): Return date, format "YYYY-MM-DD"
+#   - departure_date (list[str]): Departure date, format "YYYY-MM-DD", or "DD.MM.YYYY", or "DD.MM.YY"
+#   - return_date (list[str], optional): Return date, format "YYYY-MM-DD", or "DD.MM.YYYY", or "DD.MM.YY"
 #
 # Returns:
 #   - dict: Contains flight details (max. 3 flights) or error message
 def get_flights(origin_city, destination_city, departure_date, return_date=None):
-    def get_access_token():
-        # Obtain OAuth2 token from Amadeus API.
+    def get_access_token(): # Obtain OAuth2 token from Amadeus API.
         url = "https://test.api.amadeus.com/v1/security/oauth2/token"
         payload = {
             "grant_type": "client_credentials",
@@ -454,8 +454,7 @@ def get_flights(origin_city, destination_city, departure_date, return_date=None)
         response.raise_for_status()
         return response.json().get("access_token")
 
-    def city_to_iata(city_name, token):
-        """Resolve city name to IATA code via Amadeus location API."""
+    def city_to_iata(city_name, token): # Resolve city name to IATA code via Amadeus location API.
         url = "https://test.api.amadeus.com/v1/reference-data/locations"
         params = {"keyword": city_name, "subType": "AIRPORT"}
         headers = {"Authorization": f"Bearer {token}"}
@@ -476,18 +475,23 @@ def get_flights(origin_city, destination_city, departure_date, return_date=None)
     except Exception as e:
         return {"error": str(e)}
 
+    # Umwandlung der Datumsangaben ins richtige Format
+    departure_date = is_valid_date(departure_date[0])
+    if return_date:
+        return_date = is_valid_date(return_date[0])
+
     url = "https://test.api.amadeus.com/v2/shopping/flight-offers"
     params = {
         "originLocationCode": origin_iata,
         "destinationLocationCode": destination_iata,
-        "departureDate": departure_date[0],
+        "departureDate": departure_date,
         "adults": 1,
         "currencyCode": "EUR",
         "max": 3
     }
 
     if return_date:
-        params["returnDate"] = return_date[0]
+        params["returnDate"] = return_date
 
     headers = {"Authorization": f"Bearer {token}"}
     response = requests.get(url, headers=headers, params=params)
@@ -516,14 +520,13 @@ def get_flights(origin_city, destination_city, departure_date, return_date=None)
     return {"flights": flights}
 
 
-
 # --- Testaufrufe ---
 if __name__ == "__main__":
     print("📈 1: Aktienkurs:", get_stock_price(["Siemens AG"]))
     print("📰 2: Nachrichten:", get_news(["technology"]))
     print("🌤️ 3: Wetter:", get_weather(["Stuttgart"]))
     print("🍽️ 4: Mensa:", get_canteen_info(["Mensa Central"]))
-    print("📅 5: Stundenplan:", get_rapla_schedule(["2025-04-15"]))
+    print("📅 5: Stundenplan:", get_rapla_schedule(["15.04."]))
     print("🚗 6: Routenzeit:", get_travel_info(["driving-car"], ["Stuttgart"], ["Hamburg"]))
-    print("🏨 7: Hotels:", get_hotels(["Berlin"], ["2025-05-10"], ["2025-05-12"]))
-    print("✈️ 8: Flugstatus:", get_flights(["Stuttgart"], ["Hamburg"], ["2025-05-10"], ["2025-05-15"]))
+    print("🏨 7: Hotels:", get_hotels(["Berlin"], ["20.05."], ["24.05."]))
+    print("✈️ 8: Flugstatus:", get_flights(["Stuttgart"], ["Houston"], ["11.05."], ["27.05.2025"]))
