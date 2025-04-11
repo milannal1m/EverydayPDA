@@ -2,7 +2,7 @@ from enum import Enum
 
 class Informations(Enum):
     NEWS_CATEGORY = (
-        ("business", "entertainment", "general", "health", "science", "sports", "technology"),
+        ("Business", "Entertainment", "General", "Health", "Science", "Sports", "Technology"),
         "News categories",
         "Some info",
         lambda x: x
