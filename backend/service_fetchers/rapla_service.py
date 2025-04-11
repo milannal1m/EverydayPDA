@@ -18,12 +18,11 @@ def get_rapla_schedule(dates):
         "&salt=648736798"
     )
     response = requests.get(url)
-
     ics_file = response.text
 
     current_event = {}
     events = {}
-
+    
     # Iterates through all lines of the given ICS file
     for date in dates:
         date = is_valid_date(date)
@@ -42,11 +41,11 @@ def get_rapla_schedule(dates):
 
             elif line.startswith("DTSTART;TZID=Europe/Berlin:"):
                 start_time = line.replace("DTSTART;TZID=Europe/Berlin:", "").strip().split("T")[1]
-                current_event["start"] = f"{start_time[:2]}:{start_time[4:6]}"
+                current_event["start"] = f"{start_time[:2]}:{start_time[2:4]}"
 
             elif line.startswith("DTEND;TZID=Europe/Berlin:"):
                 end_time = line.replace("DTEND;TZID=Europe/Berlin:", "").strip().split("T")[1]
-                current_event["end"] = f"{end_time[:2]}:{end_time[4:6]}"
+                current_event["end"] = f"{end_time[:2]}:{end_time[2:4]}"
 
             elif line.startswith("LOCATION:"):
                 current_event["location"] = line.replace("LOCATION:", "").strip()
