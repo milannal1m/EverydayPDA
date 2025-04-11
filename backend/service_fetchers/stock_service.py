@@ -27,12 +27,17 @@ def get_stock_price(stock_names):
             f"https://api.twelvedata.com/symbol_search?symbol={stock_name}&apikey={TWELVE_DATA_API_KEY}"
         )
         response = requests.get(search_url)
-        data = response.json()
+        datas = response.json()
 
-        if not data.get("data"):
+        if not datas.get("data"):
             continue  # Skip if no match found
 
-        symbol = data["data"][0].get("symbol")
+        symbol = None
+
+        for data in datas.get("data", []):
+            if data.get("exchange") == "NASDAQ":
+                symbol = data.get("symbol")
+                break
 
         # Get latest 1min time series
         url = (
@@ -61,3 +66,9 @@ def get_stock_price(stock_names):
             }
 
     return stocks
+
+if __name__ == "__main__":
+    # Example usage
+    stock_names = ["NVIDIA"]
+    stock_data = get_stock_price(stock_names)
+    print(stock_data)

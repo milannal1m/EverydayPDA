@@ -45,3 +45,9 @@ def get_news(news_topics):
             })
 
     return news
+
+if __name__ == "__main__":
+    # Example usage
+    news_topics = ["Business", "Technology"]
+    news_data = get_news(news_topics)
+    print(news_data)
