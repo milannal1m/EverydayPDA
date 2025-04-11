@@ -10,7 +10,7 @@
 
 ## Coverage
 
-![Coverage](https://img.shields.io/badge/Coverage-89.1%25-brightgreen)
+![Coverage](https://img.shields.io/badge/Coverage-89.0%25-brightgreen)
 
 | Datei | Coverage (%) |
 |---|---|
@@ -43,7 +43,7 @@
 | frontend/pref_handler.py | 59.8% |
 | frontend/speech_utils.py | 100.0% |
 | frontend/start_handler.py | 75.0% |
-| **Projekt** | **89.1%** |
+| **Projekt** | **89.0%** |
 
 ## API
 
