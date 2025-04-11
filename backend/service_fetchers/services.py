@@ -6,10 +6,12 @@ from datetime import datetime
 import time
 import difflib
 
+# Load path to .env file
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 env_path = os.path.join(BASE_DIR, ".env")
 load_dotenv(env_path)
 
+# Retrieve API keys from environment variables
 TWELVE_DATA_API_KEY = os.getenv("TWELVE_DATA_API_KEY")
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
