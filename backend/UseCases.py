@@ -1,8 +1,12 @@
 from enum import Enum
-from service_fetchers.services import get_stock_price, get_news, get_weather, get_canteen_info, get_rapla_schedule, get_travel_info, get_hotels, get_flights
-
-#def placeholder(*args, **kwargs):
-    #raise NotImplementedError("Diese Funktion ist noch nicht implementiert.")
+from service_fetchers.stock_service import get_stock_price
+from service_fetchers.news_service import get_news
+from service_fetchers.weather_service import get_weather
+from service_fetchers.canteen_service import get_canteen_info
+from service_fetchers.rapla_service import get_rapla_schedule
+from service_fetchers.traveltime_service import get_travel_info
+from service_fetchers.hotel_service import get_hotels
+from service_fetchers.flight_service import get_flights
 
 class UseCases(Enum):
     STOCKS = (1, "Stock Market Information", ["Stock-Name"], get_stock_price)
