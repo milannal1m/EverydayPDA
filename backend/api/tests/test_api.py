@@ -4,9 +4,8 @@ from fastapi.testclient import TestClient
 import os
 import sys
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from answer_processor import AnswerProcessor
-from main import app, User
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..','..')))
+from backend.api.main import app
 
 class TestGetPreferences(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
