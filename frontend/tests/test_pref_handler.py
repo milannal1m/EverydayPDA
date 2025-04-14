@@ -14,7 +14,7 @@ class TestPreferenceHandler(unittest.IsolatedAsyncioTestCase):
         mock_get_preferences.return_value = (
             {
                 "course": "Informatik",
-                "canteen": "Mensa A",
+                "cafeteria": "Mensa A",
                 "city": "Berlin",
                 "preferred_transport_medium": "Bus",
                 "stocks": ["Apple", "Tesla"],
@@ -65,7 +65,7 @@ class TestPreferenceHandler(unittest.IsolatedAsyncioTestCase):
 
         next_state = await handler.change_canteen(update, context)
 
-        mock_put_preference.assert_called_once_with(123, "canteen", "Neue Mensa")
+        mock_put_preference.assert_called_once_with(123, "cafeteria", "Neue Mensa")
         update.message.reply_text.assert_awaited_with("Mensa geändert!")
         self.assertEqual(next_state, -1) # ConversationHandler.END
 
