@@ -22,7 +22,7 @@
 | backend/api/database_utils.py | 95.2% |
 | backend/api/main.py | 81.8% |
 | backend/api/models.py | 100.0% |
-| backend/api/summary_generator.py | 95.1% |
+| backend/api/summary_generator.py | 92.7% |
 | backend/api/usecase_handler.py | 60.0% |
 | backend/llm_fetchers/ChatGPTProcessor.py | 78.7% |
 | backend/llm_fetchers/UseCaseProcessor.py | 54.9% |
@@ -40,7 +40,7 @@
 | frontend/command_handlers.py | 100.0% |
 | frontend/message_handlers.py | 92.7% |
 | frontend/pref_config.py | 100.0% |
-| frontend/pref_handler.py | 59.8% |
+| frontend/pref_handler.py | 60.9% |
 | frontend/speech_utils.py | 100.0% |
 | frontend/start_handler.py | 75.0% |
 | **Projekt** | **86.3%** |
