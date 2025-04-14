@@ -76,7 +76,7 @@ class MessageHandlers:
     def configure_proactivity_jobs(self, application: Application):
         """Richtet die regelmäßigen Jobs für Morgen- und Proaktivitätsnachrichten ein."""
         morning_time = datetime.time(hour=21, minute=19, second=0)
-        proactivity_interval = 600  # Sekunden
+        proactivity_interval = 300  # Sekunden
 
         application.job_queue.run_daily(
             self.send_morning_message,
@@ -87,6 +87,7 @@ class MessageHandlers:
             self.send_proactivity_message,
             interval=proactivity_interval,
             first=0,
-            name="proactivity_message"
+            name="proactivity_message",
+            repeats=1 # DEMO
         )
 

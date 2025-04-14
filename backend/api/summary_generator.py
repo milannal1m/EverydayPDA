@@ -41,7 +41,7 @@ class UserSummaryGenerator:
         return UseCaseHandler().call_apis(use_cases, info)
 
     def __get_significant_stocks(self, stocks):
-        return {stock_id: stock for stock_id, stock in stocks.items() if abs(float(stock.get("changeFrom1hour", 0))) > 1}
+        return {stock_id: stock for stock_id, stock in stocks.items() if abs(float(stock.get("changeFrom1hour", 0))) > 0} # DEMO
 
     def __get_recent_news(self, news):
         def within_last_hour(ts: str) -> bool:
