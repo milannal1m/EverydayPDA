@@ -1,6 +1,6 @@
 -- Create users table
 CREATE TABLE users (
-    u_id INT PRIMARY KEY AUTO_INCREMENT,
+    u_id SERIAL PRIMARY KEY,
     username VARCHAR(100) NOT NULL,
     course VARCHAR(100),
     cafeteria VARCHAR(100),
@@ -10,19 +10,19 @@ CREATE TABLE users (
 
 -- Create stocks table
 CREATE TABLE stocks (
-    s_id INT PRIMARY KEY AUTO_INCREMENT,
+    s_id SERIAL PRIMARY KEY,
     stock_name VARCHAR(100) NOT NULL
 );
 
 -- Create news table
 CREATE TABLE news (
-    n_id INT PRIMARY KEY AUTO_INCREMENT,
+    n_id SERIAL PRIMARY KEY,
     news_name VARCHAR(255) NOT NULL
 );
 
 -- Create user-stock relationship table with ON DELETE CASCADE
 CREATE TABLE user_stocks (
-    id INT PRIMARY KEY AUTO_INCREMENT,
+    id SERIAL PRIMARY KEY,
     u_id INT,
     s_id INT,
     FOREIGN KEY (u_id) REFERENCES users(u_id) ON DELETE CASCADE,
@@ -31,7 +31,7 @@ CREATE TABLE user_stocks (
 
 -- Create user-news relationship table with ON DELETE CASCADE
 CREATE TABLE user_news (
-    id INT PRIMARY KEY AUTO_INCREMENT,
+    id SERIAL PRIMARY KEY,
     u_id INT,
     n_id INT,
     FOREIGN KEY (n_id) REFERENCES news(n_id) ON DELETE CASCADE
